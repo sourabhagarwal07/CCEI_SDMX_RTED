@@ -1,0 +1,28 @@
+{
+  "languages": ["en", "fr"],
+  "translation": [
+      {"en": "Hello", "fr": "Bonjur"},
+	  {"en": "High Frequency Electricity Data Dashboard HFED - Pilot Project", "fr": "Tableau de bord des données sur l'électricité à haute fréquence HFED - Projet pilote"},
+	  {"en": "Prince Edward Island", "fr": "Île-du-Prince-Édouard"},
+	  {"en": "Nova Scotia", "fr": "Nouvelle-Écosse"},
+	  {"en": "New Brunswick", "fr": "Nouveau-Brunswick"},
+	  {"en": "Ontario", "fr": "Ontario"},
+	  {"en": "Alberta", "fr": "Alberta"},
+	  {"en": "British Columbia", "fr": "Colombie britannique"},
+	  {"en": "Newfoundland & Labrador", "fr": "Terre-Neuve-et-Labrador"},
+	  {"en": "Quebec", "fr": "Québec"},
+	  {"en": "Dashboard", "fr": "Tableau de bord"},
+	  {"en": "Data Dictionary", "fr": "Dictionnaire de données"},
+	  {"en": "Downloads", "fr": "téléchargements"},
+	  {"en": "Settings", "fr": "réglages"},
+	  {"en": "About", "fr": "Sur"},
+	  {"en": "Live Data", "fr": "Données en direct"},
+	  {"en": "The Canadian Center for Energy Information (CCEI) presents a dashboard gathering publicly-available high-frequency electricity data in Canada.", "fr": "Le Centre canadien d'information sur l'énergie (CCEI) présente un tableau de bord rassemblant des données publiques sur l'électricité à haute fréquence au Canada."},
+      {"en": "Information is collected by web scraping.", "fr": "Les informations sont collectées par web scraping."},
+	  {"en": "Data visualizations and datasets are updated as soon as new data points become available on provincial utility websites.", "fr": "Les visualisations de données et les ensembles de données sont mis à jour dès que de nouveaux points de données sont disponibles sur les sites Web provinciaux des services publics."},
+	  {"en": "This new source of information was developed by the CCEI with the support of many partners namely National Resource Canada (NRCan), the Canada Energy Regulator (CER) and Statistics Canada.", "fr": "Cette nouvelle source d'information a été développée par le CCEI avec l'appui de nombreux partenaires dont Ressources nationales Canada (RNCan), la Régie de l'énergie du Canada (CER) et Statistique Canada."},
+	  {"en": "It aims at providing simplified access to timely (almost real-time) and detailed information (hourly granularity) on electricity and supporting key analysis on energy.", "fr": "Il vise à fournir un accès simplifié à des informations opportunes (presque en temps réel) et détaillées (granularité horaire) sur l'électricité et à soutenir des analyses clés sur l'énergie."}
+
+    ]
+}
+

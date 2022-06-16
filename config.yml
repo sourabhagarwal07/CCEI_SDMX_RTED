@@ -1,0 +1,141 @@
+default:
+  username: "sourabh.agarwal@cloud.statcan.ca"
+  TDS_Version: NULL
+  Port: 1433
+  encrypt: TRUE
+  TSC: "no"
+  server: "ccei.database.windows.net"
+  database: "ccei"
+  auth: "ActiveDirectoryInteractive"
+  driver: "ODBC Driver 17 for SQL Server"
+  dd_sheet: "Variables definitions"
+  provinces:
+    PEI:
+      table1: "pei_rted"
+    BC:
+      table1: "bc_hourly_table_1_rted_utc"
+      table2: "z_bc_test_table_2"
+      table3: "bc_hourly_table_3_rted_utc"
+    AB:
+      table1: "ab_hourly_demand_utc"
+      table2: "ab_test_3"
+      table3: "ab_test_4"
+      table4: "ab_test_5_summary"
+      table5: "ab_test_5_generation"
+      table6: "ab_test_5_interchange"
+      table7: "ab_test_5_gas"
+      table8: "ab_test_5_hydro"
+      table9: "ab_test_5_storage"
+      table10: "ab_test_5_solar"
+      table11: "ab_test_5_wind"
+      table12: "ab_test_5_biomass"
+      table13: "ab_test_5_dual"
+      table14: "ab_test_5_coal"
+      table15: "ab_hourly_zonal_demand_hist_utc"
+    ONT:
+      table1: "Ontario_Load_RTED"
+    NB:
+      table1: "nb_realtime_alldata_new_brunswick_utc"
+    NS:
+      table1: "ns_realtime_load_novascotia_utc"
+      table2: "ns_realtime_trade_novascotia_utc"
+    QUEBEC:
+      table1: "hfed_qb_quarterhour_demand"
+      table2: "hfed_qb_hourly_production"
+      table3: "hfed_qb_hourly_allvar_hist"
+    NFL:
+      table1: "NFL_rt_load"
+local:
+  username: "sourabh.agarwal@cloud.statcan.ca"
+  TDS_Version: NULL
+  Port: 1433
+  encrypt: "yes"
+  TSC: "no"
+  server: "ccei.database.windows.net"
+  database: "ccei"
+  auth: "ActiveDirectoryInteractive"
+  driver: "ODBC Driver 17 for SQL Server"
+  dd_sheet: "Variables definitions"
+  provinces:
+    PEI:
+      table1: "pei_rted"
+    BC:
+      table1: "bc_hourly_table_1_rted_utc"
+      table2: "z_bc_test_table_2"
+      table3: "bc_hourly_table_3_rted_utc"
+    AB:
+      table1: "ab_hourly_demand_utc"
+      table2: "ab_test_3"
+      table3: "ab_test_4"
+      table4: "ab_test_5_summary"
+      table5: "ab_test_5_generation"
+      table6: "ab_test_5_interchange"
+      table7: "ab_test_5_gas"
+      table8: "ab_test_5_hydro"
+      table9: "ab_test_5_storage"
+      table10: "ab_test_5_solar"
+      table11: "ab_test_5_wind"
+      table12: "ab_test_5_biomass"
+      table13: "ab_test_5_dual"
+      table14: "ab_test_5_coal"
+      table15: "ab_hourly_zonal_demand_hist_utc"
+    ONT:
+      table1: "Ontario_Load_RTED"
+    NB:
+      table1: "nb_realtime_alldata_new_brunswick_utc"
+    NS:
+      table1: "ns_realtime_load_novascotia_utc"
+      table2: "ns_realtime_trade_novascotia_utc"
+    QUEBEC:
+      table1: "hfed_qb_quarterhour_demand"
+      table2: "hfed_qb_hourly_production"
+      table3: "hfed_qb_hourly_allvar_hist"
+    NFL:
+      table1: "NFL_rt_load"
+shinyapps:
+  username: "sourabh.agarwal@cloud.statcan.ca"
+  TDS_Version: 8.0
+  Port: 1433
+  encrypt: "yes"
+  TSC: "no"
+  server: "ccei.database.windows.net"
+  database: "ccei"
+  auth: "ActiveDirectoryInteractive"
+  driver: "FreeTDS"
+  dd_sheet: "Variables definitions"
+  provinces:
+    PEI:
+      table1: "pei_rted"
+    BC:
+      table1: "bc_hourly_table_1_rted_utc"
+      table2: "z_bc_test_table_2"
+      table3: "bc_hourly_table_3_rted_utc"
+    AB:
+      table1: "ab_hourly_demand_utc"
+      table2: "ab_test_3"
+      table3: "ab_test_4"
+      table4: "ab_test_5_summary"
+      table5: "ab_test_5_generation"
+      table6: "ab_test_5_interchange"
+      table7: "ab_test_5_gas"
+      table8: "ab_test_5_hydro"
+      table9: "ab_test_5_storage"
+      table10: "ab_test_5_solar"
+      table11: "ab_test_5_wind"
+      table12: "ab_test_5_biomass"
+      table13: "ab_test_5_dual"
+      table14: "ab_test_5_coal"
+      table15: "ab_hourly_zonal_demand_hist_utc"
+    ONT:
+      table1: "Ontario_Load_RTED"
+    NB:
+      table1: "nb_realtime_alldata_new_brunswick_utc"
+    NS:
+      table1: "ns_realtime_load_novascotia_utc"
+      table2: "ns_realtime_trade_novascotia_utc"
+    QUEBEC:
+      table1: "hfed_qb_quarterhour_demand"
+      table2: "hfed_qb_hourly_production"
+      table3: "hfed_qb_hourly_allvar_hist"
+    NFL:
+      table1: "NFL_rt_load"
