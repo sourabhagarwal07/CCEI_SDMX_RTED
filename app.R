@@ -6,7 +6,6 @@
 #
 #    http://shiny.rstudio.com/
 #
-library(DBI)
 library(shiny)
 library(highcharter)
 library(dplyr)
@@ -18,24 +17,18 @@ library(shinyjs)
 library(shinycustomloader)
 library(shinyBS)
 library(config)
-library(readxl)
-library(RODBC)
 library(tidyquant)
-library(googlesheets4)
-library(googledrive)
 library(shiny.i18n)
-library(reactlog)
-library(rsdmx)
 library(httr)
-library(RCurl)
-library(curl)
 library(future)
-library(furrr)
-library(XML)
+library(promises)
+library(readxl)
+library(logger)
 
-
-n_cores <- availableCores()-1
-plan(multicore, workers = n_cores)
+plan(multisession)
+log_threshold(TRACE)
+log_layout(layout_glue_colors)
+shinyOptions(cache = cachem::cache_disk("./app_cache/cache/"))
 
 i18n <- Translator$new(translation_json_path = "www/translation_fr.json")
 i18n$set_translation_language("en")
@@ -68,7 +61,6 @@ ui <- dashboardPage(
   dashboardBody(
     shinyjs::useShinyjs(),
     usei18n(i18n),
-    tags$head(HTML("<link rel='icon' type='image/x-icon' href='www/statslogo.png'>")),
     tags$style(HTML("
 
 
@@ -201,6 +193,12 @@ animation: blink-animation 1s steps(5, start) infinite;
   color: white;
 }
 
+#bc_er_txt{
+color: red;
+font-style: italic;
+}
+
+
 
 
 
@@ -228,7 +226,7 @@ animation: blink-animation 1s steps(5, start) infinite;
                                           width = 4, status = "success", solidHeader = TRUE,
                                           collapsible = TRUE,
                                           column(
-                                            fluidRow(withLoader(highchartOutput("PEI_load"), type = "html", loader = "loader3")),
+                                            fluidRow(withLoader(uiOutput("PEI_load"), type = "html", loader = "loader3")),
                                             fluidRow(bsButton("button_pei","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12)
                                         ),
                                         box(
@@ -236,14 +234,14 @@ animation: blink-animation 1s steps(5, start) infinite;
                                                            fluidRow(column(width = 8, h4(i18n$t("Nova Scotia"))),column(width = 12, id="nsmean",uiOutput("NS_MEAN")))),width = 4, status = "success", solidHeader = TRUE,
                                           collapsible = TRUE,
                                           column(
-                                            fluidRow(withLoader(highchartOutput("NS_load"), type = "html", loader = "loader3")),
+                                            fluidRow(withLoader(uiOutput("NS_load"), type = "html", loader = "loader3")),
                                             fluidRow(bsButton("button_NS","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12)),
                                         box(
                                           title = fluidRow(id = "dash_title",
                                                            fluidRow(column(width = 8, h4(i18n$t("New Brunswick"))),column(width = 12, id="nbmean",uiOutput("NB_MEAN")))),width = 4, status = "success", solidHeader = TRUE,
                                           collapsible = TRUE,
                                           column(
-                                            fluidRow(withLoader(highchartOutput("NB_load"), type = "html", loader = "loader3")),
+                                            fluidRow(withLoader(uiOutput("NB_load"), type = "html", loader = "loader3")),
                                             fluidRow(bsButton("button_NB","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12)),
                                       ),
                                       fluidRow(
@@ -252,22 +250,23 @@ animation: blink-animation 1s steps(5, start) infinite;
                                                            fluidRow(column(width = 8, h4(i18n$t("Ontario"))),column(width = 12, id="onmean",uiOutput("ON_MEAN")))),width = 4, status = "success", solidHeader = TRUE,
                                           collapsible = TRUE,
                                           column(
-                                            fluidRow(withLoader(highchartOutput("ON_load"), type = "html", loader = "loader3")),
+                                            fluidRow(withLoader(uiOutput("ON_load"), type = "html", loader = "loader3")),
                                             fluidRow(bsButton("button_ON","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12)),
                                         box(
                                           title = fluidRow(id = "dash_title",
                                                            fluidRow(column(width = 8, h4(i18n$t("Alberta"))),column(width = 12, id="abmean",uiOutput("AB_MEAN")))),width = 4, status = "success", solidHeader = TRUE,
                                           collapsible = TRUE,
                                           column(
-                                            fluidRow(withLoader(highchartOutput("AB_load"), type = "html", loader = "loader3")),
+                                            fluidRow(withLoader(uiOutput("AB_load"), type = "html", loader = "loader3")),
                                             fluidRow(bsButton("button_AB","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12)),
                                         box(
                                           title = fluidRow(id = "dash_title",
                                                            fluidRow(column(width = 8, h4(i18n$t("British Columbia"))),column(width = 12, id="bcmean",uiOutput("BC_MEAN")))),width = 4, status = "success", solidHeader = TRUE,
                                           collapsible = TRUE,
                                           column(
-                                            fluidRow(withLoader(highchartOutput("BC_load"), type = "html", loader = "loader3")),
-                                            fluidRow(bsButton("button_BC","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12)),
+                                            
+                                              withLoader(uiOutput("BC_load"), type = "html", loader = "loader3"),
+                                            fluidRow(bsButton("button_BC","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12))
                                       ),
                                       fluidRow(
                                         box(
@@ -275,14 +274,14 @@ animation: blink-animation 1s steps(5, start) infinite;
                                                            fluidRow(column(width = 8, h4(i18n$t("Newfoundland & Labrador"))),column(width =12, id="nflmean",uiOutput("NFL_MEAN")))),width = 6, status = "success", solidHeader = TRUE,
                                           collapsible = TRUE,
                                           column(
-                                            fluidRow(withLoader(highchartOutput("NFL_load"), type = "html", loader = "loader3")),
+                                            fluidRow(withLoader(uiOutput("NFL_load"), type = "html", loader = "loader3")),
                                             fluidRow(bsButton("button_NFL","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12)),
                                         box(
                                           title = fluidRow(id = "dash_title",
                                                            fluidRow(column(width = 8, h4(i18n$t("Quebec"))),column(width = 12, id="qbmean",uiOutput("QB_MEAN")))),width = 6, status = "success", solidHeader = TRUE,
                                           collapsible = TRUE,
                                           column(
-                                            fluidRow(withLoader(highchartOutput("QB_load"), type = "html", loader = "loader3")),
+                                            fluidRow(withLoader(uiOutput("QB_load"), type = "html", loader = "loader3")),
                                             fluidRow(bsButton("button_QB","For More Detailed Information, Click Here", icon = icon("chart-bar"), style = "primary", block = TRUE)),width = 12)),
                                       ))))),
       
@@ -309,15 +308,15 @@ animation: blink-animation 1s steps(5, start) infinite;
                                                                                                                                                 timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_pei == 1",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_LOAD_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_LOAD_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_pei == 6",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_LOAD_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_LOAD_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_pei == 3",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_LOAD_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_LOAD_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_pei == 4",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_LOAD_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_LOAD_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_pei == 5",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_LOAD_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_LOAD_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
@@ -328,7 +327,7 @@ animation: blink-animation 1s steps(5, start) infinite;
                                  box(
                                    title = i18n$t("Fuel Type"), width = 10, status = "warning", solidHeader = TRUE,
                                    collapsible = TRUE,
-                                   fluidRow(column(width = 2, selectInput("select_fr_pei_2", h4("Frequency"), 
+                                   fluidRow(column(width = 2, selectInput("select_fr_pei_2", h4("Frequency"),
                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
                                             column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_pei_2 != 1",sliderInput("pei_dates_2",
                                                                                                                                                   "Dates",
@@ -338,78 +337,78 @@ animation: blink-animation 1s steps(5, start) infinite;
                                                                                                                                                   timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_pei_2 == 1",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_WIND_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_WIND_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_pei_2 == 6",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_WIND_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_WIND_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_pei_2 == 3",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_WIND_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_WIND_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_pei_2 == 4",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_WIND_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_WIND_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_pei_2 == 5",
-                                                     fluidRow(withLoader(highchartOutput("PEI_ON_WIND_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("PEI_ON_WIND_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
                                    )
                                  ))),
-                        fluidRow(
-                          column(width =10, offset = 2,
-                                 box(
-                                   title = "Import & Export", width = 10, status = "warning", solidHeader = TRUE,
-                                   collapsible = TRUE,
-                                   fluidRow(column(width = 2, selectInput("select_fr_pei_3", h4("Frequency"), 
-                                                                          choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
-                                            column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_pei_3 != 1",sliderInput("pei_dates_3",
-                                                                                                                                                  "Dates",
-                                                                                                                                                  min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
-                                                                                                                                                  max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
-                                                                                                                                                  value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
-                                                                                                                                                  timeFormat="%Y-%m-%d")))
-                                   ),
-                                   conditionalPanel( condition = "input.select_fr_pei_3 == 1",
-                                                     fluidRow(withLoader(highchartOutput("PEI_EXPORT_YEARLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_pei_3 == 6",
-                                                     fluidRow(withLoader(highchartOutput("PEI_EXPORT_ALL"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_pei_3 == 3",
-                                                     fluidRow(withLoader(highchartOutput("PEI_EXPORT_WEEKLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_pei_3 == 4",
-                                                     fluidRow(withLoader(highchartOutput("PEI_EXPORT_DAILY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_pei_3 == 5",
-                                                     fluidRow(withLoader(highchartOutput("PEI_EXPORT_HOURLY"),type = "html", loader = "loader3"))),
-                                   fluidRow(
-                                     column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
-                                     column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
-                                   )
-                                 ))),
-                        fluidRow(
-                          column(width =10, offset = 2,
-                                 box(
-                                   title = "Wind Percentage", width = 10, status = "warning", solidHeader = TRUE,
-                                   collapsible = TRUE,
-                                   fluidRow(column(width = 2, selectInput("select_fr_pei_4", h4("Frequency"), 
-                                                                          choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
-                                            column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_pei_4 != 1",sliderInput("pei_dates_4",
-                                                                                                                                                  "Dates",
-                                                                                                                                                  min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
-                                                                                                                                                  max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
-                                                                                                                                                  value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
-                                                                                                                                                  timeFormat="%Y-%m-%d")))
-                                   ),
-                                   conditionalPanel( condition = "input.select_fr_pei_4 == 1",
-                                                     fluidRow(withLoader(highchartOutput("PEI_LOCAL_YEARLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_pei_4 == 6",
-                                                     fluidRow(withLoader(highchartOutput("PEI_LOCAL_ALL"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_pei_4 == 3",
-                                                     fluidRow(withLoader(highchartOutput("PEI_LOCAL_WEEKLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_pei_4 == 4",
-                                                     fluidRow(withLoader(highchartOutput("PEI_LOCAL_DAILY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_pei_4 == 5",
-                                                     fluidRow(withLoader(highchartOutput("PEI_LOCAL_HOURLY"),type = "html", loader = "loader3"))),
-                                   fluidRow(
-                                     column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
-                                     column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
-                                   )
-                                 )))
+                         fluidRow(
+                           column(width =10, offset = 2,
+                                  box(
+                                    title = "Import & Export", width = 10, status = "warning", solidHeader = TRUE,
+                                    collapsible = TRUE,
+                                    fluidRow(column(width = 2, selectInput("select_fr_pei_3", h4("Frequency"), 
+                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
+                                             column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_pei_3 != 1",sliderInput("pei_dates_3",
+                                                                                                                                                   "Dates",
+                                                                                                                                                   min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
+                                                                                                                                                   max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
+                                                                                                                                                   value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
+                                                                                                                                                   timeFormat="%Y-%m-%d")))
+                                    ),
+                                    conditionalPanel( condition = "input.select_fr_pei_3 == 1",
+                                                      fluidRow(withLoader(uiOutput("PEI_EXPORT_YEARLY"),type = "html", loader = "loader3"))),
+                                    conditionalPanel( condition = "input.select_fr_pei_3 == 6",
+                                                      fluidRow(withLoader(uiOutput("PEI_EXPORT_ALL"),type = "html", loader = "loader3"))),
+                                    conditionalPanel( condition = "input.select_fr_pei_3 == 3",
+                                                      fluidRow(withLoader(uiOutput("PEI_EXPORT_WEEKLY"),type = "html", loader = "loader3"))),
+                                    conditionalPanel( condition = "input.select_fr_pei_3 == 4",
+                                                      fluidRow(withLoader(uiOutput("PEI_EXPORT_DAILY"),type = "html", loader = "loader3"))),
+                                    conditionalPanel( condition = "input.select_fr_pei_3 == 5",
+                                                      fluidRow(withLoader(uiOutput("PEI_EXPORT_HOURLY"),type = "html", loader = "loader3"))),
+                                    fluidRow(
+                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
+                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
+                                    )
+                                  ))),
+                         fluidRow(
+                           column(width =10, offset = 2,
+                                  box(
+                                    title = "Wind Percentage", width = 10, status = "warning", solidHeader = TRUE,
+                                    collapsible = TRUE,
+                                    fluidRow(column(width = 2, selectInput("select_fr_pei_4", h4("Frequency"), 
+                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
+                                             column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_pei_4 != 1",sliderInput("pei_dates_4",
+                                                                                                                                                   "Dates",
+                                                                                                                                                   min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
+                                                                                                                                                   max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
+                                                                                                                                                   value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
+                                                                                                                                                   timeFormat="%Y-%m-%d")))
+                                    ),
+                                    conditionalPanel( condition = "input.select_fr_pei_4 == 1",
+                                                      fluidRow(withLoader(uiOutput("PEI_LOCAL_YEARLY"),type = "html", loader = "loader3"))),
+                                    conditionalPanel( condition = "input.select_fr_pei_4 == 6",
+                                                      fluidRow(withLoader(uiOutput("PEI_LOCAL_ALL"),type = "html", loader = "loader3"))),
+                                    conditionalPanel( condition = "input.select_fr_pei_4 == 3",
+                                                      fluidRow(withLoader(uiOutput("PEI_LOCAL_WEEKLY"),type = "html", loader = "loader3"))),
+                                    conditionalPanel( condition = "input.select_fr_pei_4 == 4",
+                                                      fluidRow(withLoader(uiOutput("PEI_LOCAL_DAILY"),type = "html", loader = "loader3"))),
+                                    conditionalPanel( condition = "input.select_fr_pei_4 == 5",
+                                                      fluidRow(withLoader(uiOutput("PEI_LOCAL_HOURLY"),type = "html", loader = "loader3"))),
+                                    fluidRow(
+                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
+                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
+                                    )
+                                  )))
               )),
       tabItem(tabName = "NS",
               fluidPage(id = "dashboard_page",
@@ -1893,23 +1892,33 @@ animation: blink-animation 1s steps(5, start) infinite;
 base_url_prefix <- "https://fdi-design-sdmx.aaw-dev.cloud.statcan.ca/rest/data/CCEI,"
 base_url_suffix <- "&dimensionAtObservation=AllDimensions"
 base_url_suffix_lastnobs <- "&lastNObservations="
-dataset <- function(dataflow,ref_area,energy_flow,startdate,enddate,nlastobs){
-  if(is.null(startdate)&&is.null(enddate)){
-    dataset_url <- paste(base_url_prefix,dataflow,",1.0/N.","..",energy_flow,"?",base_url_suffix,base_url_suffix_lastnobs,nlastobs,sep = "")
+dataset <- function(dataflow,ref_area,freq,energy_flow,startdate,enddate,nlastobs){
+  if(is.null(startdate)&&is.null(enddate)&&!is.null(nlastobs)){
+    dataset_url <- paste(base_url_prefix,dataflow,",1.0/",freq,".","..",energy_flow,"?",base_url_suffix,base_url_suffix_lastnobs,nlastobs,sep = "")
   }
-  if(is.null(nlastobs)&&is.null(startdate)&&is.null(enddate)){
-    dataset_url <- paste(base_url_prefix,dataflow,",1.0/N.","..",energy_flow,"?",base_url_suffix,sep = "")
+  else if(is.null(nlastobs)&&is.null(startdate)&&is.null(enddate)){
+    dataset_url <- paste(base_url_prefix,dataflow,",1.0/",freq,".","..",energy_flow,"?",base_url_suffix,sep = "")
   }
   else{
-    dataset_url <- paste(base_url_prefix,dataflow,",1.0/N.","..",energy_flow,"?","startPeriod=",startdate,"&endPeriod=",enddate,"&",base_url_suffix,sep = "")
+    dataset_url <- paste(base_url_prefix,dataflow,",1.0/",freq,".","..",energy_flow,"?","startPeriod=",startdate,"&endPeriod=",enddate,"&",base_url_suffix,sep = "")
   }
-  raw_data <- GET(dataset_url, accept("application/vnd.sdmx.data+csv; charset=utf-8"))
-  bin <- content(raw_data, "text", encoding = "ISO-8859-1")
+  api_cl_st_t <- Sys.time()
+  raw_data <- future({GET(dataset_url, accept("application/vnd.sdmx.data+csv; charset=utf-8"))})
+  bin <- content(value(raw_data), "text", encoding = "ISO-8859-1")
   clean_data <- read.table(text = bin, sep =",", header = TRUE, stringsAsFactors = FALSE)
+  api_cl_en_t <- Sys.time()
   sortdata <- clean_data
+  api_pr_st_t <- Sys.time()
   sortdata$DATETIME_LOCAL <- str_replace(sortdata$DATETIME_LOCAL,"T"," ")
   sortdata$DATETIME_LOCAL <- as.POSIXlt(sortdata$DATETIME_LOCAL,format="%Y-%m-%d %H:%M:%S")
-  print(paste("DataFlow",dataflow,"Status",status_code(raw_data),sep = ":"))
+  api_pr_en_t <- Sys.time()
+  log_info('DataFlow:{dataflow} -- Variable:{energy_flow} -- {difftime(api_cl_en_t,api_cl_st_t)} sec for response time -- {difftime(api_pr_en_t,api_pr_st_t)} sec for process time -- rows: {nrow(sortdata)}')
+  if(status_code(value(raw_data)) == 200){
+    log_success('Status:{status_code(value(raw_data))}')
+  }
+  else{
+    log_error('Status:{status_code(value(raw_data))}')
+  }
   
   if(!is.null(energy_flow))
   {
@@ -1921,6 +1930,25 @@ dataset <- function(dataflow,ref_area,energy_flow,startdate,enddate,nlastobs){
   }
   return(dataset_energyflow)
 }
+
+status_api <- function(dataflow,ref_area,freq,energy_flow,startdate,enddate,nlastobs){
+  if(is.null(startdate)&&is.null(enddate)&&!is.null(nlastobs)){
+    dataset_url <- paste(base_url_prefix,dataflow,",1.0/",freq,".","..",energy_flow,"?",base_url_suffix,base_url_suffix_lastnobs,nlastobs,sep = "")
+  }
+  else if(is.null(nlastobs)&&is.null(startdate)&&is.null(enddate)){
+    dataset_url <- paste(base_url_prefix,dataflow,",1.0/",freq,".","..",energy_flow,"?",base_url_suffix,sep = "")
+  }
+  else{
+    dataset_url <- paste(base_url_prefix,dataflow,",1.0/",freq,".","..",energy_flow,"?","startPeriod=",startdate,"&endPeriod=",enddate,"&",base_url_suffix,sep = "")
+  }
+  api_cl_st_t <- Sys.time()
+  raw_data <- future({GET(dataset_url, accept("application/vnd.sdmx.data+csv; charset=utf-8"))})
+  bin <- content(value(raw_data), "text", encoding = "ISO-8859-1")
+  return(status_code(value(raw_data)))
+}
+
+
+
 
 
 
@@ -1938,24 +1966,19 @@ server <- function(input, output, session) {
   }
   
   config <- config::get()
-  #con <- DBI::dbConnect(odbc::odbc(), 
-                        #UID = config$username,
-                        #TDS_Version = config$TDS_version,
-                        #Port = config$Port,
-                        #Encrypt = config$encrypt,
-                        #TrustServerCertificate = config$TSC,
-                        #Driver=config$driver,
-                        #Server = config$server, Database = config$database,
-                        #Authentication = config$auth,
-                        #timeoutSecs = 30)
   
-  
-  
+  # Dates for visualizations 
   Previous_date <- as.Date(Sys.Date())-(5*365)
   previous_time <- paste(Previous_date,"00:00:00",sep=" ")
   
   Previous_date_1 <- as.Date(Sys.Date())-(1)
   previous_time_1 <- paste(Previous_date_1,"00:00:00",sep=" ")
+  
+  sdmx_date_start <- as.character(as.Date(Sys.Date())-(1))
+  sdmx_date_end <- as.character(as.Date(Sys.Date()))
+  
+  sdmx_date_start_ind_p <<- as.character(as.Date(Sys.Date())-(90))
+  sdmx_date_end_ind_p <<- as.character(as.Date(Sys.Date()))
   
   
   
@@ -2037,71 +2060,185 @@ server <- function(input, output, session) {
   output$timer_qb <- renderText({invalidateLater(1000, session)
     paste("",as.POSIXlt(Sys.time(), tz = "UTC"),"(UTC)")})
   
-  
-  
-  check_db_nb <- function(){dataset("DF_HFED_NB","CA_NB","LOAD",NULL,NULL,NULL) %>% count(DATETIME_LOCAL)}
-  get_data_nb <- function(){dataset("DF_HFED_NB","CA_NB","LOAD",NULL,NULL,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()}
-  nbload_data_pre <- reactivePoll(intervalMillis = 300000, session = session,
-                                  checkFunc = check_db_nb, valueFunc = get_data_nb)
-  nbload_data <- reactive({nbload_data_pre()})
-  nbload_data_mean_cr <- reactive({tail(nbload_data()$OBS_VALUE,1)})
-  nbload_data_mean_pst <- reactive({nbload_data()$OBS_VALUE[nrow(nbload_data())-1]})
-  nbload_data_mean_diff <- reactive({nbload_data_mean_cr()-nbload_data_mean_pst()})
-  nbload_data_mean_prcnt <- reactive({nbload_data_mean_diff()/100})
-  observeEvent(nbload_data_pre(),{
-    
-    if(nbload_data_mean_prcnt() < 0){
-      removeClass("nbmean","green_output")
-      addClass("nbmean","red_output")
-      output$NB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",round(nbload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
+  #new brunswick front dashboard
+  st_tm_dsh_nb <- Sys.time()
+  check_nb_stat_api <- function(){status_api("DF_HFED_NB","CA_NB","H","LOAD",NULL,NULL,1)}
+  get_nb_stat_api <- function(){status_api("DF_HFED_NB","CA_NB","H","LOAD",NULL,NULL,1)}
+  nb_stat_api <- reactivePoll(intervalMillis = 1800000, session = session,
+                              checkFunc = check_nb_stat_api, valueFunc = get_nb_stat_api)
+  nb_status <- reactive({nb_stat_api()})
+  observeEvent(nb_stat_api(),{
+    if(nb_status() == 200){
+      nb_api_stat <<- reactive({HTML(paste("<i style='color:green; font-style:italic;'> Okay:",nb_status(),"</i>"))})
+      test_nb_dat <<- dataset("DF_HFED_NB","CA_NB","H","LOAD",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+      log_info("Current NB Date: {test_nb_dat$DATETIME_LOCAL}")
+      if((as.Date(test_nb_dat$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_nb_dat$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+      {
+        check_db_nb <- function(){dataset("DF_HFED_NB","CA_NB","H","LOAD",sdmx_date_start,sdmx_date_end,NULL) %>% count(DATETIME_LOCAL)}
+        get_db_nb <- function(){dataset("DF_HFED_NB","CA_NB","H","LOAD",sdmx_date_start,sdmx_date_end,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_success("Using Latest Data for NB")
+        nb_src_stat <<- reactive({HTML("<i style='color:green; font-style:italic;'> Okay</i>")})
+      }
+      else
+      {
+        check_db_nb <- function(){dataset("DF_HFED_NB","CA_NB","H","LOAD",NULL,NULL,10) %>% count(DATETIME_LOCAL)}
+        get_db_nb <- function(){dataset("DF_HFED_NB","CA_NB","H","LOAD",NULL,NULL,10) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_error("Using Nrow Data for NB")
+        nb_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      }
+      nbload_data_pre <- reactivePoll(intervalMillis = 1800000, session = session,
+                                      checkFunc = check_db_nb, valueFunc = get_db_nb)
+      nbload_data <- reactive({nbload_data_pre()})
+      nbload_data_mean_cr <- reactive({tail(nbload_data()$OBS_VALUE,1)})
+      nbload_data_mean_pst <- reactive({nbload_data()$OBS_VALUE[nrow(nbload_data())-1]})
+      nbload_data_mean_diff <- reactive({nbload_data_mean_cr()-nbload_data_mean_pst()})
+      nbload_data_mean_prcnt <- reactive({nbload_data_mean_diff()/100})
+      observeEvent(nbload_data_pre(),{
+        
+        if(nbload_data_mean_prcnt() < 0){
+          removeClass("nbmean","green_output")
+          addClass("nbmean","red_output")
+          output$NB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",abs(round(nbload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }
+        if(nbload_data_mean_prcnt() > 0){
+          removeClass("nbmean","red_output")
+          addClass("nbmean","green_output")
+          output$NB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",abs(round(nbload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }})
+      nbload_subset <- reactive({nbload_data()})
+      nb_load_ts <-  reactive({xts(nbload_subset()$OBS_VALUE,as.POSIXlt(nbload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      
+      
+      output$NB_load <- renderUI({
+        highchart(height = 400) %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(nb_load_ts(), type = "line", name = "Load: ", color = "pink") %>% 
+          hc_navigator(enabled = TRUE)}) %>% bindCache(nb_load_ts(),cache = "app")
+      
+      
+      log_success("Dashboard started, Status:{nb_status()}")
+      
     }
-    if(nbload_data_mean_prcnt() > 0){
-      removeClass("nbmean","red_output")
-      addClass("nbmean","green_output")
-      output$NB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",round(nbload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
-    }})
-  nbload_subset <- reactive({subset(nbload_data(),subset = nbload_data()$DATETIME_LOCAL >= previous_time_1)})
-  nb_load_ts <-  reactive({xts(nbload_subset()$OBS_VALUE,nbload_subset()$DATETIME_LOCAL)})
-  
-  output$NB_load <- renderHighchart({ 
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(nb_load_ts(), type = "line", id = "ts", name = "Load: ") %>% 
-      hc_navigator(enabled = TRUE)
+    else if(nb_status() != 200)
+    {
+      output$NB_load <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='nb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",nb_status(),"Error</i>
+                                     </div>
+                                           "))})
+      nb_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      nb_api_stat <<- reactive({HTML(paste("<i style='color:red; font-style:italic;'> Error:",nb_status(),"</i>"))})
+      log_error("Error Dashboard started, Status:{nb_status()}")
+    }
+    
+    en_tm_dsh_nb <- Sys.time()
+    log_info('{difftime(en_tm_dsh_nb,st_tm_dsh_nb)} sec for NB dashboard')
   })
+  #end new brunswick
   
-  check_db_ns <- function(){dataset("DF_HFED_NS","CA_NS","LOAD",NULL,NULL,NULL) %>% count(DATETIME_LOCAL)}
-  get_data_ns <- function(){dataset("DF_HFED_NS","CA_NS","LOAD",NULL,NULL,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
-  nsload_data_pre <- reactivePoll(intervalMillis = 300000, session = session,
-                                  checkFunc = check_db_ns, valueFunc = get_data_ns)
-  nsload_data <- reactive({nsload_data_pre()})
-  nsload_data_mean_cr <- reactive({tail(nsload_data()$OBS_VALUE,1)})
-  nsload_data_mean_pst <- reactive({nsload_data()$OBS_VALUE[nrow(nsload_data())-1]})
-  nsload_data_mean_diff <- reactive({nsload_data_mean_cr()-nsload_data_mean_pst()})
-  nsload_data_mean_prcnt <- reactive({nsload_data_mean_diff()/100})
-  observeEvent(nsload_data_pre(),{
-    
-    if(nsload_data_mean_prcnt() < 0){
-      removeClass("nsmean","green_output")
-      addClass("nsmean","red_output")
-      output$NS_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",round(nsload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
+  #start nova scotia front
+  st_tm_dsh_ns <- Sys.time()
+  check_ns_stat_api <- function(){status_api("DF_HFED_NS","CA_NS","N","LOAD",NULL,NULL,1)}
+  get_ns_stat_api <- function(){status_api("DF_HFED_NS","CA_NS","N","LOAD",NULL,NULL,1)}
+  ns_stat_api <- reactivePoll(intervalMillis = 1800000, session = session,
+                              checkFunc = check_ns_stat_api, valueFunc = get_ns_stat_api)
+  ns_status <- reactive({ns_stat_api()})
+  observeEvent(ns_stat_api(),{
+    if(ns_status() == 200){
+      ns_api_stat <<- reactive({HTML(paste("<i style='color:green; font-style:italic;'> Okay:",ns_status(),"</i>"))})
+      test_ns_dat <<- dataset("DF_HFED_NS","CA_NS","N","LOAD",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+      log_info("Current NS Date: {test_ns_dat$DATETIME_LOCAL}")
+      if((as.Date(test_ns_dat$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_ns_dat$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+      {
+        check_db_ns <- function(){dataset("DF_HFED_NS","CA_NS","N","LOAD",sdmx_date_start,sdmx_date_end,NULL) %>% count(DATETIME_LOCAL)}
+        get_db_ns <- function(){dataset("DF_HFED_NS","CA_NS","N","LOAD",sdmx_date_start,sdmx_date_end,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_success("Using Latest Data for NS")
+        ns_src_stat <<- reactive({HTML("<i style='color:green; font-style:italic;'> Okay</i>")})
+      }
+      else
+      {
+        check_db_ns <- function(){dataset("DF_HFED_NS","CA_NS","N","LOAD",NULL,NULL,10) %>% count(DATETIME_LOCAL)}
+        get_db_ns <- function(){dataset("DF_HFED_NS","CA_NS","N","LOAD",NULL,NULL,10) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_error("Using Nrow Data for NS")
+        ns_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      }
+      nsload_data_pre <- reactivePoll(intervalMillis = 1800000, session = session,
+                                      checkFunc = check_db_ns, valueFunc = get_db_ns)
+      nsload_data <- reactive({nsload_data_pre()})
+      nsload_data_mean_cr <- reactive({tail(nsload_data()$OBS_VALUE,1)})
+      nsload_data_mean_pst <- reactive({nsload_data()$OBS_VALUE[nrow(nsload_data())-1]})
+      nsload_data_mean_diff <- reactive({nsload_data_mean_cr()-nsload_data_mean_pst()})
+      nsload_data_mean_prcnt <- reactive({nsload_data_mean_diff()/100})
+      observeEvent(nsload_data_pre(),{
+        
+        if(nsload_data_mean_prcnt() < 0){
+          removeClass("nsmean","green_output")
+          addClass("nsmean","red_output")
+          output$NS_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",abs(round(nsload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }
+        if(nsload_data_mean_prcnt() > 0){
+          removeClass("nsmean","red_output")
+          addClass("nsmean","green_output")
+          output$NS_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",abs(round(nsload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }})
+      nsload_subset <- reactive({nsload_data()})
+      ns_load_ts <-  reactive({xts(nsload_subset()$OBS_VALUE,as.POSIXlt(nsload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      
+      
+      output$NS_load <- renderUI({
+        highchart(height = 400) %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(ns_load_ts(), type = "line", name = "Load: ", color = "pink") %>% 
+          hc_navigator(enabled = TRUE)}) %>% bindCache(ns_load_ts(),cache = "app")
+      
+      
+      log_success("Dashboard started, Status:{ns_status()}")
+      
     }
-    if(nsload_data_mean_prcnt() > 0){
-      removeClass("nsmean","red_output")
-      addClass("nsmean","green_output")
-      output$NS_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",round(nsload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
-    }})
-  nsload_subset <- reactive({subset(nsload_data(),subset = nsload_data()$DATETIME_LOCAL >= previous_time_1)})
-  ns_load_ts <-  reactive({xts(nsload_subset()$OBS_VALUE,nsload_subset()$DATETIME_LOCAL)})
+    else if(ns_status() != 200)
+    {
+      output$NS_load <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",ns_status(),"Error</i>
+                                     </div>
+                                           "))})
+      ns_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      ns_api_stat <<- reactive({HTML(paste("<i style='color:red; font-style:italic;'> Error:",ns_status(),"</i>"))})
+      log_error("Error Dashboard started, Status:{ns_status()}")
+    }
+    
+    en_tm_dsh_ns <- Sys.time()
+    log_info('{difftime(en_tm_dsh_ns,st_tm_dsh_ns)} sec for NS dashboard')
+  })
+  #end nova scotia
   
-  output$NS_load <- renderHighchart({highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(ns_load_ts(), type = "line", name = "Load: ", color = "green") %>% 
-      hc_navigator(enabled = TRUE)}) 
-  
-  check_db_bc <- function(){dataset("DF_HFED_BC","CA_BC","LOAD",NULL,NULL,NULL) %>% count(DATETIME_LOCAL)}
-  get_db_bc <- function(){dataset("DF_HFED_BC","CA_BC","LOAD",NULL,NULL,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()}
-  bcload_data_pre <- reactivePoll(intervalMillis = 300000, session = session,
+  #BC Front Dashboard
+  st_tm_dsh_bc <- Sys.time()
+  check_bc_stat_api <- function(){status_api("DF_HFED_BC","CA_BC","H","LOAD",NULL,NULL,1)}
+  get_bc_stat_api <- function(){status_api("DF_HFED_BC","CA_BC","H","LOAD",NULL,NULL,1)}
+  bc_stat_api <- reactivePoll(intervalMillis = 1800000, session = session,
+               checkFunc = check_bc_stat_api, valueFunc = get_bc_stat_api)
+  bc_status <- reactive({bc_stat_api()})
+  observeEvent(bc_stat_api(),{
+  if(bc_status() == 200){
+    bc_api_stat <<- reactive({HTML(paste("<i style='color:green; font-style:italic;'> Okay:",bc_status(),"</i>"))})
+    test_bc_dat <<- dataset("DF_HFED_BC","CA_BC","H","LOAD",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+    log_info("Current BC Date: {test_bc_dat$DATETIME_LOCAL}")
+    if((as.Date(test_bc_dat$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_bc_dat$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+    {
+      check_db_bc <- function(){dataset("DF_HFED_BC","CA_BC","H","LOAD",sdmx_date_start,sdmx_date_end,NULL) %>% count(DATETIME_LOCAL)}
+      get_db_bc <- function(){dataset("DF_HFED_BC","CA_BC","H","LOAD",sdmx_date_start,sdmx_date_end,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
+      log_success("Using Latest Data for BC")
+      bc_src_stat <<- reactive({HTML("<i style='color:green; font-style:italic;'> Okay</i>")})
+    }
+    else
+    {
+      check_db_bc <- function(){dataset("DF_HFED_BC","CA_BC","H","LOAD",NULL,NULL,10) %>% count(DATETIME_LOCAL)}
+      get_db_bc <- function(){dataset("DF_HFED_BC","CA_BC","H","LOAD",NULL,NULL,10) %>% arrange(DATETIME_LOCAL) %>% collect()}
+      log_error("Using Nrow Data for BC")
+      bc_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+    }
+  bcload_data_pre <- reactivePoll(intervalMillis = 1800000, session = session,
                                   checkFunc = check_db_bc, valueFunc = get_db_bc)
   bcload_data <- reactive({bcload_data_pre()})
   bcload_data_mean_cr <- reactive({tail(bcload_data()$OBS_VALUE,1)})
@@ -2113,344 +2250,707 @@ server <- function(input, output, session) {
     if(bcload_data_mean_prcnt() < 0){
       removeClass("bcmean","green_output")
       addClass("bcmean","red_output")
-      output$BC_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",round(bcload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
+      output$BC_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",abs(round(bcload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
     }
     if(bcload_data_mean_prcnt() > 0){
       removeClass("bcmean","red_output")
       addClass("bcmean","green_output")
-      output$BC_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",round(bcload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
+      output$BC_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",abs(round(bcload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
     }})
-  bcload_subset <- reactive({bcload_data()[(1:10),]})
+  bcload_subset <- reactive({bcload_data()})
   bc_load_ts <-  reactive({xts(bcload_subset()$OBS_VALUE,as.POSIXlt(bcload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
   
-  output$BC_load <- renderHighchart({highchart() %>% 
+  
+  output$BC_load <- renderUI({
+    highchart(height = 400) %>% 
       hc_xAxis(type = "datetime") %>% 
       hc_add_series(bc_load_ts(), type = "line", name = "Load: ", color = "pink") %>% 
-      hc_navigator(enabled = TRUE)})
+      hc_navigator(enabled = TRUE)}) %>% bindCache(bc_load_ts(),cache = "app")
+  
+  
+  log_success("Dashboard started, Status:{bc_status()}")
+  
+  }
+  else if(bc_status() != 200)
+    {
+    output$BC_load <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='bc_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",bc_status(),"Error</i>
+                                     </div>
+                                           "))})
+    bc_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+    bc_api_stat <<- reactive({HTML(paste("<i style='color:red; font-style:italic;'> Error:",bc_status(),"</i>"))})
+    log_error("Error Dashboard started, Status:{bc_status()}")
+    }
+  
+  en_tm_dsh_bc <- Sys.time()
+  log_info('{difftime(en_tm_dsh_bc,st_tm_dsh_bc)} sec for BC dashboard')
+  })
+  #BC-front-end
   
   #output$AB_load <- renderHighchart({ab_load_chart})
   
-  check_db_on <- function(){dataset("DF_HFED_ON","CA_ON","ONTARIO_DEMAND",NULL,NULL,NULL) %>% count(DATETIME_LOCAL)}
-  get_data_on <- function(){dataset("DF_HFED_ON","CA_ON","ONTARIO_DEMAND",NULL,NULL,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
-  onload_data_pre <- reactivePoll(intervalMillis = 300000, session = session,
-                                  checkFunc = check_db_on, valueFunc = get_data_on)
-  onload_data <- reactive({onload_data_pre()})
-  onload_data_mean_cr <- reactive({tail(onload_data()$OBS_VALUE,1)})
-  onload_data_mean_pst <- reactive({onload_data()$OBS_VALUE[nrow(onload_data())-1]})
-  onload_data_mean_diff <- reactive({onload_data_mean_cr()-onload_data_mean_pst()})
-  onload_data_mean_prcnt <- reactive({onload_data_mean_diff()/100})
-  observeEvent(onload_data_pre(),{
-    
-    if(onload_data_mean_prcnt() < 0){
-      removeClass("onmean","green_output")
-      addClass("onmean","red_output")
-      output$ON_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",round(onload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
+  # start front Ontario 
+  st_tm_dsh_on <- Sys.time()
+  check_on_stat_api <- function(){status_api("DF_HFED_ON","CA_ON","H","ONTARIO_DEMAND",NULL,NULL,1)}
+  get_on_stat_api <- function(){status_api("DF_HFED_ON","CA_ON","H","ONTARIO_DEMAND",NULL,NULL,1)}
+  on_stat_api <- reactivePoll(intervalMillis = 1800000, session = session,
+                              checkFunc = check_on_stat_api, valueFunc = get_on_stat_api)
+  on_status <- reactive({on_stat_api()})
+  observeEvent(on_stat_api(),{
+    if(on_status() == 200){
+      on_api_stat <<- reactive({HTML(paste("<i style='color:green; font-style:italic;'> Okay:",on_status(),"</i>"))})
+      test_on_dat <<- dataset("DF_HFED_ON","CA_ON","H","ONTARIO_DEMAND",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+      log_info("Current ON Date: {test_on_dat$DATETIME_LOCAL}")
+      if((as.Date(test_on_dat$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_on_dat$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+      {
+        check_db_on <- function(){dataset("DF_HFED_ON","CA_ON","H","ONTARIO_DEMAND",sdmx_date_start,sdmx_date_end,NULL) %>% count(DATETIME_LOCAL)}
+        get_db_on <- function(){dataset("DF_HFED_ON","CA_ON","H","ONTARIO_DEMAND",sdmx_date_start,sdmx_date_end,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_success("Using Latest Data for ON")
+        on_src_stat <<- reactive({HTML("<i style='color:green; font-style:italic;'> Okay</i>")})
+      }
+      else
+      {
+        check_db_on <- function(){dataset("DF_HFED_ON","CA_ON","H","ONTARIO_DEMAND",NULL,NULL,10) %>% count(DATETIME_LOCAL)}
+        get_db_on <- function(){dataset("DF_HFED_ON","CA_ON","H","ONTARIO_DEMAND",NULL,NULL,10) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_error("Using Nrow Data for ON")
+        on_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      }
+      onload_data_pre <- reactivePoll(intervalMillis = 1800000, session = session,
+                                      checkFunc = check_db_on, valueFunc = get_db_on)
+      onload_data <- reactive({onload_data_pre()})
+      onload_data_mean_cr <- reactive({tail(onload_data()$OBS_VALUE,1)})
+      onload_data_mean_pst <- reactive({onload_data()$OBS_VALUE[nrow(onload_data())-1]})
+      onload_data_mean_diff <- reactive({onload_data_mean_cr()-onload_data_mean_pst()})
+      onload_data_mean_prcnt <- reactive({onload_data_mean_diff()/100})
+      observeEvent(onload_data_pre(),{
+        
+        if(onload_data_mean_prcnt() < 0){
+          removeClass("onmean","green_output")
+          addClass("onmean","red_output")
+          output$ON_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",abs(round(onload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }
+        if(onload_data_mean_prcnt() > 0){
+          removeClass("onmean","red_output")
+          addClass("onmean","green_output")
+          output$ON_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",abs(round(onload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }})
+      onload_subset <- reactive({onload_data()})
+      on_load_ts <-  reactive({xts(onload_subset()$OBS_VALUE,as.POSIXlt(onload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      
+      
+      output$ON_load <- renderUI({
+        highchart(height = 400) %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(on_load_ts(), type = "line", name = "Load: ", color = "pink") %>% 
+          hc_navigator(enabled = TRUE)}) %>% bindCache(on_load_ts(),cache = "app")
+      
+      
+      log_success("Dashboard started, Status:{on_status()}")
+      
     }
-    if(onload_data_mean_prcnt() > 0){
-      removeClass("onmean","red_output")
-      addClass("onmean","green_output")
-      output$ON_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",round(onload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
-    }})
-  
-  onload_subset <- reactive({subset(onload_data(),subset = onload_data()$DATETIME_LOCAL >= previous_time_1)})
-  on_load_ts <-  reactive({xts(onload_subset()$OBS_VALUE,onload_subset()$DATETIME_LOCAL)})
-  
-  output$ON_load <- renderHighchart({highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(on_load_ts(), type = "line", name = "Load: ", color = "orange") %>% 
-      hc_navigator(enabled = TRUE)})
-  
-  check_db_pei <- function(){dataset("DF_HFED_PE","CA_PE","ON_ISL_LOAD",NULL,NULL,NULL) %>% count(DATETIME_LOCAL)}
-  get_data_pei <- function(){dataset("DF_HFED_PE","CA_PE","ON_ISL_LOAD",NULL,NULL,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
-  peiload_data_pre <- reactivePoll(intervalMillis = 300000, session = session,
-                                   checkFunc = check_db_pei, valueFunc = get_data_pei)
-  peiload_data <- reactive({peiload_data_pre()})
-  peiload_data_mean_cr <- reactive({tail(peiload_data()$OBS_VALUE,1)})
-  peiload_data_mean_pst <- reactive({peiload_data()$OBS_VALUE[nrow(peiload_data())-1]})
-  peiload_data_mean_diff <- reactive({peiload_data_mean_cr()-peiload_data_mean_pst()})
-  peiload_data_mean_prcnt <- reactive({peiload_data_mean_diff()/100})
-  observeEvent(peiload_data_pre(),{
-    
-    if(peiload_data_mean_prcnt() < 0){
-      removeClass("peimean","green_output")
-      addClass("peimean","red_output")
-      output$PEI_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",round(peiload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
+    else if(on_status() != 200)
+    {
+      output$ON_load <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='on_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",on_status(),"Error</i>
+                                     </div>
+                                           "))})
+      on_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      on_api_stat <<- reactive({HTML(paste("<i style='color:red; font-style:italic;'> Error:",on_status(),"</i>"))})
+      log_error("Error Dashboard started, Status:{on_status()}")
     }
-    if(peiload_data_mean_prcnt() > 0){
-      removeClass("peimean","red_output")
-      addClass("peimean","green_output")
-      output$PEI_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",round(peiload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
-    }})
-  
-  
-  peiload_subset <- reactive({subset(peiload_data(),subset = peiload_data()$DATETIME_LOCAL >= previous_time_1)})
-  pei_load_ts <-  reactive({xts(peiload_subset()$OBS_VALUE,peiload_subset()$DATETIME_LOCAL)})
-  
-  output$PEI_load <- renderHighchart({highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_load_ts(), type = "line", name = "Load: ", color = "red") %>% 
-      hc_navigator(enabled = TRUE)}) 
-  
-  check_db_nfl <- function(){dataset("DF_HFED_NL","CA_NL","DEMAND",NULL,NULL,NULL) %>% count(DATETIME_LOCAL)}
-  get_data_nfl <- function(){dataset("DF_HFED_NL","CA_NL","DEMAND",NULL,NULL,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()}
-  nflload_data_pre <- reactivePoll(intervalMillis = 300000, session = session,
-                                   checkFunc = check_db_nfl, valueFunc = get_data_nfl)
-  nflload_data <- reactive({nflload_data_pre()})
-  nflload_data_mean_cr <- reactive({tail(nflload_data()$OBS_VALUE,1)})
-  nflload_data_mean_pst <- reactive({nflload_data()$OBS_VALUE[nrow(nflload_data())-1]})
-  nflload_data_mean_diff <- reactive({nflload_data_mean_cr()-nflload_data_mean_pst()})
-  nflload_data_mean_prcnt <- reactive({nflload_data_mean_diff()/100})
-  observeEvent(nflload_data_pre(),{
     
-    if(nflload_data_mean_prcnt() < 0){
-      removeClass("nflmean","green_output")
-      addClass("nflmean","red_output")
-      output$NFL_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",round(nflload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
+    en_tm_dsh_on <- Sys.time()
+    log_info('{difftime(en_tm_dsh_on,st_tm_dsh_on)} sec for ON dashboard')
+  })
+#end Ontario front
+
+#start Prince edward island front
+  st_tm_dsh_pei <- Sys.time()
+  test_pei_dat <<- dataset("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+  check_pei_stat_api <- function(){status_api("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,1)}
+  get_pei_stat_api <- function(){status_api("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,1)}
+  pei_stat_api <- reactivePoll(intervalMillis = 1800000, session = session,
+                               checkFunc = check_pei_stat_api, valueFunc = get_pei_stat_api)
+  pei_status <- reactive({pei_stat_api()})
+  observeEvent(pei_stat_api(),{
+    if(pei_status() == 200){
+      pei_api_stat <<- reactive({HTML(paste("<i style='color:green; font-style:italic;'> Okay:",pei_status(),"</i>"))})
+      log_info("Current PEI Date: {test_pei_dat$DATETIME_LOCAL}")
+      if((as.Date(test_pei_dat$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_pei_dat$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+      {
+        check_db_pei <- function(){dataset("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",sdmx_date_start,sdmx_date_end,NULL) %>% count(DATETIME_LOCAL)}
+        get_db_pei <- function(){dataset("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",sdmx_date_start,sdmx_date_end,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_success("Using Latest Data for PEI")
+        pei_src_stat <<- reactive({HTML("<i style='color:green; font-style:italic;'> Okay</i>")})
+      }
+      else
+      {
+        check_db_pei <- function(){dataset("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,10) %>% count(DATETIME_LOCAL)}
+        get_db_pei <- function(){dataset("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,10) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_error("Using Nrow Data for PEI")
+        pei_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      }
+      peiload_data_pre <- reactivePoll(intervalMillis = 1800000, session = session,
+                                       checkFunc = check_db_pei, valueFunc = get_db_pei)
+      peiload_data <- reactive({peiload_data_pre()})
+      peiload_data_mean_cr <- reactive({tail(peiload_data()$OBS_VALUE,1)})
+      peiload_data_mean_pst <- reactive({peiload_data()$OBS_VALUE[nrow(peiload_data())-1]})
+      peiload_data_mean_diff <- reactive({peiload_data_mean_cr()-peiload_data_mean_pst()})
+      peiload_data_mean_prcnt <- reactive({peiload_data_mean_diff()/100})
+      observeEvent(peiload_data_pre(),{
+        
+        if(peiload_data_mean_prcnt() < 0){
+          removeClass("peimean","green_output")
+          addClass("peimean","red_output")
+          output$PEI_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",abs(round(peiload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }
+        if(peiload_data_mean_prcnt() > 0){
+          removeClass("peimean","red_output")
+          addClass("peimean","green_output")
+          output$PEI_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",abs(round(peiload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }})
+      peiload_subset <- reactive({peiload_data()})
+      pei_load_ts <-  reactive({xts(peiload_subset()$OBS_VALUE,as.POSIXlt(peiload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      
+      
+      output$PEI_load <- renderUI({
+        highchart(height = 400) %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_load_ts(), type = "line", name = "Load: ", color = "pink") %>% 
+          hc_navigator(enabled = TRUE)}) %>% bindCache(pei_load_ts(),cache = "app")
+      
+      
+      log_success("Dashboard started, Status:{pei_status()}")
+      
     }
-    if(nflload_data_mean_prcnt() > 0){
-      removeClass("nflmean","red_output")
-      addClass("nflmean","green_output")
-      output$NFL_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",round(nflload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
-    }})
-  
-  nflload_subset <- reactive({nflload_data()[(1:10),]})
-  nfl_load_ts <-  reactive({xts(nflload_subset()$OBS_VALUE,nflload_subset()$DATETIME_LOCAL)})
-  
-  output$NFL_load <- renderHighchart({highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(nfl_load_ts(), type = "line", name = "Load: ", color = "red") %>% 
-      hc_navigator(enabled = TRUE)})
-  
-  check_db_qb <- function(){dataset("DF_HFED_QC","CA_QC","DEMAND",NULL,NULL,NULL) %>% count(DATETIME_LOCAL)}
-  get_data_qb <- function(){dataset("DF_HFED_QC","CA_QC","DEMAND",NULL,NULL,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
-  qbload_data_pre <- reactivePoll(intervalMillis = 300000, session = session,
-                                  checkFunc = check_db_qb, valueFunc = get_data_qb)
-  qbload_data <- reactive({qbload_data_pre()})
-  qbload_data_mean_cr <- reactive({tail(qbload_data()$OBS_VALUE,1)})
-  qbload_data_mean_pst <- reactive({qbload_data()$OBS_VALUE[nrow(qbload_data())-1]})
-  qbload_data_mean_diff <- reactive({qbload_data_mean_cr()-qbload_data_mean_pst()})
-  qbload_data_mean_prcnt <- reactive({qbload_data_mean_diff()/100})
-  observeEvent(qbload_data_pre,{
+    else if(pei_status() != 200)
+    {
+      output$PEI_load <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status(),"Error</i>
+                                     </div>
+                                           "))})
+      pei_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      pei_api_stat <<- reactive({HTML(paste("<i style='color:red; font-style:italic;'> Error:",pei_status(),"</i>"))})
+      log_error("Error Dashboard started, Status:{pei_status()}")
+    }
     
-    if(qbload_data_mean_prcnt() < 0){
-      removeClass("qbmean","green_output")
-      addClass("qbmean","red_output")
-      output$QB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",round(qbload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
+    en_tm_dsh_pei <- Sys.time()
+    log_info('{difftime(en_tm_dsh_pei,st_tm_dsh_pei)} sec for PEI dashboard')
+  })
+#end PEI front
+
+#start front Newfound & labradour
+  st_tm_dsh_nfl <- Sys.time()
+  check_nfl_stat_api <- function(){status_api("DF_HFED_NL","CA_NL","N","DEMAND",NULL,NULL,1)}
+  get_nfl_stat_api <- function(){status_api("DF_HFED_NL","CA_NL","N","DEMAND",NULL,NULL,1)}
+  nfl_stat_api <- reactivePoll(intervalMillis = 1800000, session = session,
+                               checkFunc = check_nfl_stat_api, valueFunc = get_nfl_stat_api)
+  nfl_status <- reactive({nfl_stat_api()})
+  observeEvent(nfl_stat_api(),{
+    if(nfl_status() == 200){
+      nfl_api_stat <<- reactive({HTML(paste("<i style='color:green; font-style:italic;'> Okay:",nfl_status(),"</i>"))})
+      test_nfl_dat <<- dataset("DF_HFED_NL","CA_NL","N","DEMAND",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+      log_info("Current NFL Date: {test_nfl_dat$DATETIME_LOCAL}")
+      if((as.Date(test_nfl_dat$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_nfl_dat$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+      {
+        check_db_nfl <- function(){dataset("DF_HFED_NL","CA_NL","N","DEMAND",sdmx_date_start,sdmx_date_end,NULL) %>% count(DATETIME_LOCAL)}
+        get_db_nfl <- function(){dataset("DF_HFED_NL","CA_NL","N","DEMAND",sdmx_date_start,sdmx_date_end,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_success("Using Latest Data for NFL")
+        nfl_src_stat <<- reactive({HTML("<i style='color:green; font-style:italic;'> Okay</i>")})
+      }
+      else
+      {
+        check_db_nfl <- function(){dataset("DF_HFED_NL","CA_NL","N","DEMAND",NULL,NULL,10) %>% count(DATETIME_LOCAL)}
+        get_db_nfl <- function(){dataset("DF_HFED_NL","CA_NL","N","DEMAND",NULL,NULL,10) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_error("Using Nrow Data for NFL")
+        nfl_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      }
+      nflload_data_pre <- reactivePoll(intervalMillis = 1800000, session = session,
+                                       checkFunc = check_db_nfl, valueFunc = get_db_nfl)
+      nflload_data <- reactive({nflload_data_pre()})
+      nflload_data_mean_cr <- reactive({tail(nflload_data()$OBS_VALUE,1)})
+      nflload_data_mean_pst <- reactive({nflload_data()$OBS_VALUE[nrow(nflload_data())-1]})
+      nflload_data_mean_diff <- reactive({nflload_data_mean_cr()-nflload_data_mean_pst()})
+      nflload_data_mean_prcnt <- reactive({nflload_data_mean_diff()/100})
+      observeEvent(nflload_data_pre(),{
+        
+        if(nflload_data_mean_prcnt() < 0){
+          removeClass("nflmean","green_output")
+          addClass("nflmean","red_output")
+          output$NFL_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",abs(round(nflload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }
+        if(nflload_data_mean_prcnt() > 0){
+          removeClass("nflmean","red_output")
+          addClass("nflmean","green_output")
+          output$NFL_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",abs(round(nflload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }})
+      nflload_subset <- reactive({nflload_data()})
+      nfl_load_ts <-  reactive({xts(nflload_subset()$OBS_VALUE,as.POSIXlt(nflload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      
+      
+      output$NFL_load <- renderUI({
+        highchart(height = 400) %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(nfl_load_ts(), type = "line", name = "Load: ", color = "pink") %>% 
+          hc_navigator(enabled = TRUE)}) %>% bindCache(nfl_load_ts(),cache = "app")
+      
+      
+      log_success("Dashboard started, Status:{nfl_status()}")
+      
     }
-    if(qbload_data_mean_prcnt() > 0){
-      removeClass("qbmean","red_output")
-      addClass("qbmean","green_output")
-      output$QB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",round(qbload_data_mean_prcnt(),digits = 2),"% in last Hour</i></h4>"))})
-    }})
+    else if(nfl_status() != 200)
+    {
+      output$NFL_load <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='nfl_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",nfl_status(),"Error</i>
+                                     </div>
+                                           "))})
+      nfl_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      nfl_api_stat <<- reactive({HTML(paste("<i style='color:red; font-style:italic;'> Error:",nfl_status(),"</i>"))})
+      log_error("Error Dashboard started, Status:{nfl_status()}")
+    }
+    
+    en_tm_dsh_nfl <- Sys.time()
+    log_info('{difftime(en_tm_dsh_nfl,st_tm_dsh_nfl)} sec for NFL dashboard')
+  })
+#end front NFL
   
-  qbload_subset <- reactive({subset(qbload_data(),subset = qbload_data()$DATETIME_LOCAL >= previous_time_1)})
-  qb_load_ts <-  reactive({xts(qbload_subset()$OBS_VALUE,qbload_subset()$DATETIME_LOCAL)})
+#start front Quebec  
+  st_tm_dsh_qb <- Sys.time()
+  check_qb_stat_api <- function(){status_api("DF_HFED_QC","CA_QC","N","DEMAND",NULL,NULL,1)}
+  get_qb_stat_api <- function(){status_api("DF_HFED_QC","CA_QC","N","DEMAND",NULL,NULL,1)}
+  qb_stat_api <- reactivePoll(intervalMillis = 1800000, session = session,
+                              checkFunc = check_qb_stat_api, valueFunc = get_qb_stat_api)
+  qb_status <- reactive({qb_stat_api()})
+  observeEvent(qb_stat_api(),{
+    if(qb_status() == 200){
+      qb_api_stat <<- reactive({HTML(paste("<i style='color:green; font-style:italic;'> Okay:",qb_status(),"</i>"))})
+      test_qb_dat <<- dataset("DF_HFED_QC","CA_QC","N","DEMAND",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+      log_info("Current QB Date: {test_qb_dat$DATETIME_LOCAL}")
+      if((as.Date(test_qb_dat$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_qb_dat$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+      {
+        check_db_qb <- function(){dataset("DF_HFED_QC","CA_QC","N","DEMAND",sdmx_date_start,sdmx_date_end,NULL) %>% count(DATETIME_LOCAL)}
+        get_db_qb <- function(){dataset("DF_HFED_QC","CA_QC","N","DEMAND",sdmx_date_start,sdmx_date_end,NULL) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_success("Using Latest Data for QB")
+        qb_src_stat <<- reactive({HTML("<i style='color:green; font-style:italic;'> Okay</i>")})
+      }
+      else
+      {
+        check_db_qb <- function(){dataset("DF_HFED_QC","CA_QC","N","DEMAND",NULL,NULL,10) %>% count(DATETIME_LOCAL)}
+        get_db_qb <- function(){dataset("DF_HFED_QC","CA_QC","N","DEMAND",NULL,NULL,10) %>% arrange(DATETIME_LOCAL) %>% collect()}
+        log_error("Using Nrow Data for QB")
+        qb_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      }
+      qbload_data_pre <- reactivePoll(intervalMillis = 1800000, session = session,
+                                      checkFunc = check_db_qb, valueFunc = get_db_qb)
+      qbload_data <- reactive({qbload_data_pre()})
+      qbload_data_mean_cr <- reactive({tail(qbload_data()$OBS_VALUE,1)})
+      qbload_data_mean_pst <- reactive({qbload_data()$OBS_VALUE[nrow(qbload_data())-1]})
+      qbload_data_mean_diff <- reactive({qbload_data_mean_cr()-qbload_data_mean_pst()})
+      qbload_data_mean_prcnt <- reactive({qbload_data_mean_diff()/100})
+      observeEvent(qbload_data_pre(),{
+        
+        if(qbload_data_mean_prcnt() < 0){
+          removeClass("qbmean","green_output")
+          addClass("qbmean","red_output")
+          output$QB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",abs(round(qbload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }
+        if(qbload_data_mean_prcnt() > 0){
+          removeClass("qbmean","red_output")
+          addClass("qbmean","green_output")
+          output$QB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",abs(round(qbload_data_mean_prcnt(),digits = 2)),"% in last Hour</i></h4>"))})
+        }})
+      qbload_subset <- reactive({qbload_data()})
+      qb_load_ts <-  reactive({xts(qbload_subset()$OBS_VALUE,as.POSIXlt(qbload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      
+      
+      output$QB_load <- renderUI({
+        highchart(height = 400) %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(qb_load_ts(), type = "line", name = "Load: ", color = "pink") %>% 
+          hc_navigator(enabled = TRUE)}) %>% bindCache(qb_load_ts(),cache = "app")
+      
+      
+      log_success("Dashboard started, Status:{qb_status()}")
+      
+    }
+    else if(qb_status() != 200)
+    {
+      output$QB_load <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status(),"Error</i>
+                                     </div>
+                                           "))})
+      qb_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      qb_api_stat <<- reactive({HTML(paste("<i style='color:red; font-style:italic;'> Error:",qb_status(),"</i>"))})
+      log_error("Error Dashboard started, Status:{qb_status()}")
+    }
+    
+    en_tm_dsh_qb <- Sys.time()
+    log_info('{difftime(en_tm_dsh_qb,st_tm_dsh_qb)} sec for QB dashboard')
+  })
+#end front QB
   
-  output$QB_load <- renderHighchart({highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(qb_load_ts(), type = "line", name = "Load: ", color = "red") %>% 
-      hc_navigator(enabled = TRUE)})
-  
-  
-  pei_date_ind_1_1 <- reactive({paste(input$pei_dates_1[1],"00:00:00",sep = " ")})
-  pei_date_ind_1_2 <- reactive({paste(input$pei_dates_1[2],"00:00:00",sep = " ")})
-  pei_ind_subset_dat <- reactive({subset(pei_ind_dat,subset = (pei_ind_dat$Date_time_local >= pei_date_ind_1_1() & pei_ind_dat$Date_time_local <= pei_date_ind_1_2()))})
-  pei_ind_dat_ts <- reactive({xts(pei_ind_dat$on_island_load,pei_ind_dat$Date_time_local)})
-  pei_ind_subset_ts <- reactive({xts(pei_ind_subset_dat()$on_island_load,pei_ind_subset_dat()$Date_time_local)})
-  pei_ind_dat_ts_yearly <- reactive({to.yearly(pei_ind_dat_ts())})
-  pei_ind_dat_ts_monthly <- reactive({to.monthly(pei_ind_subset_ts())})
-  pei_ind_dat_ts_weekly <- reactive({to.weekly(pei_ind_subset_ts())})
-  pei_ind_dat_ts_daily <- reactive({to.daily(pei_ind_subset_ts())})
-  pei_ind_dat_ts_hourly <- reactive({
-    pei_hr <- to.hourly(pei_ind_subset_ts()) 
-    return(pei_hr)
+  #PRINCE EDWARD ISLAND START
+
+  st_tm_dsh_pei <- Sys.time()
+  test_pei_dat_ind <<- dataset("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+  check_pei_stat_api_ind <- function(){status_api("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,1)}
+  get_pei_stat_api_ind <- function(){status_api("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,1)}
+  pei_stat_api_ind <- reactivePoll(intervalMillis = 1800000, session = session,
+                                   checkFunc = check_pei_stat_api_ind, valueFunc = get_pei_stat_api_ind)
+  pei_status_ind <- reactive({pei_stat_api_ind()})
+  observeEvent(pei_stat_api_ind(),{
+    if(pei_status_ind() == 200){
+      if((as.Date(test_pei_dat_ind$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_pei_dat_ind$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+      {
+        pei_ind_dat_load <<- dataset("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_fossil <<- dataset("DF_HFED_PE","CA_PE","N","ON_ISL_FOSSIL",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_wind_export <<- dataset("DF_HFED_PE","CA_PE","N","WIND_EXPORT",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_wind_percent <<- dataset("DF_HFED_PE","CA_PE","N","WIND_PERCENT",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_wind <<- dataset("DF_HFED_PE","CA_PE","N","ON_ISL_WIND",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_wind_local <<- dataset("DF_HFED_PE","CA_PE","N","WIND_LOCAL",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_cables <<- dataset("DF_HFED_PE","CA_PE","N","IMPORT_CABLES",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        log_success("Using latest data for PEI")
+      }
+      else{
+        pei_ind_dat_load <<- dataset("DF_HFED_PE","CA_PE","N","ON_ISL_LOAD",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_fossil <<- dataset("DF_HFED_PE","CA_PE","N","ON_ISL_FOSSIL",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_wind_export <<- dataset("DF_HFED_PE","CA_PE","N","WIND_EXPORT",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_wind_percent <<- dataset("DF_HFED_PE","CA_PE","N","WIND_PERCENT",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_wind <<- dataset("DF_HFED_PE","CA_PE","N","ON_ISL_WIND",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_wind_local <<- dataset("DF_HFED_PE","CA_PE","N","WIND_LOCAL",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        pei_ind_dat_cables <<- dataset("DF_HFED_PE","CA_PE","N","IMPORT_CABLES",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+        log_error("Using NROWS data for PEI")
+      }
+      
+      st_tm_dsh_pei_1 <- Sys.time()
+      pei_date_ind_1_1 <- reactive({paste(input$pei_dates_1[1],"00:00:00",sep = " ")})
+      pei_date_ind_1_2 <- reactive({paste(input$pei_dates_1[2],"00:00:00",sep = " ")})
+      pei_ind_subset_dat <- reactive({subset(pei_ind_dat_load,subset = (pei_ind_dat_load$DATETIME_LOCAL >= pei_date_ind_1_1() & pei_ind_dat_load$DATETIME_LOCAL <= pei_date_ind_1_2()))})
+      pei_ind_dat_ts <- reactive({xts(pei_ind_dat_load$OBS_VALUE,pei_ind_dat_load$DATETIME_LOCAL)})
+      pei_ind_subset_ts <- reactive({xts(pei_ind_subset_dat()$OBS_VALUE,pei_ind_subset_dat()$DATETIME_LOCAL)})
+      pei_ind_dat_ts_yearly <- reactive({to.yearly(pei_ind_dat_ts())})
+      pei_ind_dat_ts_monthly <- reactive({to.monthly(pei_ind_subset_ts())})
+      pei_ind_dat_ts_weekly <- reactive({to.weekly(pei_ind_subset_ts())})
+      pei_ind_dat_ts_daily <- reactive({to.daily(pei_ind_subset_ts())})
+      pei_ind_dat_ts_hourly <- reactive({
+        pei_hr <- to.hourly(pei_ind_subset_ts())
+        return(pei_hr)
+      })
+      
+      output$PEI_ON_LOAD_YEARLY <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_add_series(pei_ind_dat_ts_yearly()[,(colnames(pei_ind_dat_ts_yearly()) %in% c('pei_ind_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_ind_dat_ts_yearly()[,(colnames(pei_ind_dat_ts_yearly()) %in% c('pei_ind_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_ON_LOAD_WEEKLY <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_add_series(pei_ind_dat_ts_weekly()[,(colnames(pei_ind_dat_ts_weekly()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_ind_dat_ts_weekly()[,(colnames(pei_ind_dat_ts_weekly()) %in% c('pei_ind_subset_ts().Low'))], type = "area", name = "Low Load: ", color = "red") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_ON_LOAD_DAILY <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_add_series(pei_ind_dat_ts_daily()[,(colnames(pei_ind_dat_ts_daily()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_ind_dat_ts_daily()[,(colnames(pei_ind_dat_ts_daily()) %in% c('pei_ind_subset_ts().Low'))], type = "area", name = "Low Load: ", color = "red") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_ON_LOAD_HOURLY <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_add_series(pei_ind_dat_ts_hourly()[,(colnames(pei_ind_dat_ts_hourly()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_ind_dat_ts_hourly()[,(colnames(pei_ind_dat_ts_hourly()) %in% c('pei_ind_subset_ts().Low'))], type = "spline", name = "Low Load: ", color = "red") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_ON_LOAD_ALL <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>% hc_navigator(enabled = TRUE) %>%
+          hc_add_series(pei_ind_subset_ts(), type = "line", name = "Load: ")
+      })
+      en_tm_dsh_pei_1 <- Sys.time()
+      log_info('{difftime(en_tm_dsh_pei_1,st_tm_dsh_pei_1)} sec for PEI Main 1 dashboard')
+      
+      st_tm_dsh_pei_2 <- Sys.time()
+      pei_date_ind_2_1 <- reactive({paste(input$pei_dates_2[1],"00:00:00",sep = " ")})
+      pei_date_ind_2_2 <- reactive({paste(input$pei_dates_2[2],"00:00:00",sep = " ")})
+      pei_ind_subset_dat_2_wind <- reactive({subset(pei_ind_dat_wind,subset = (pei_ind_dat_wind$DATETIME_LOCAL >= pei_date_ind_2_1() & pei_ind_dat_wind$DATETIME_LOCAL <= pei_date_ind_2_2()))})
+      pei_ind_subset_dat_2_fossil <- reactive({subset(pei_ind_dat_fossil,subset = (pei_ind_dat_fossil$DATETIME_LOCAL >= pei_date_ind_2_1() & pei_ind_dat_fossil$DATETIME_LOCAL <= pei_date_ind_2_2()))})
+      pei_ind_dat_ts_2 <- reactive({xts(pei_ind_dat_wind$OBS_VALUE,pei_ind_dat_wind$DATETIME_LOCAL)})
+      pei_ind_dat_ts_2_fossil <- reactive({xts(pei_ind_dat_fossil$OBS_VALUE,pei_ind_dat_fossil$DATETIME_LOCAL)})
+      pei_ind_subset_ts_2 <- reactive({xts(pei_ind_subset_dat_2_wind()$OBS_VALUE,pei_ind_subset_dat_2_wind()$DATETIME_LOCAL)})
+      pei_ind_subset_ts_2_fossil <- reactive({xts(pei_ind_subset_dat_2_fossil()$OBS_VALUE,pei_ind_subset_dat_2_fossil()$DATETIME_LOCAL)})
+      pei_ind_dat_ts_yearly_2 <- reactive({to.yearly(pei_ind_dat_ts_2())})
+      pei_ind_dat_ts_monthly_2 <- reactive({to.monthly(pei_ind_subset_ts_2())})
+      pei_ind_dat_ts_weekly_2 <- reactive({to.weekly(pei_ind_subset_ts_2())})
+      pei_ind_dat_ts_daily_2 <- reactive({to.daily(pei_ind_subset_ts_2())})
+      pei_ind_dat_ts_hourly_2 <- reactive({to.hourly(pei_ind_subset_ts_2())})
+      pei_ind_dat_ts_yearly_2_fossil <- reactive({to.yearly(pei_ind_dat_ts_2_fossil())})
+      pei_ind_dat_ts_monthly_2_fossil<- reactive({to.monthly(pei_ind_subset_ts_2_fossil())})
+      pei_ind_dat_ts_weekly_2_fossil <- reactive({to.weekly(pei_ind_subset_ts_2_fossil())})
+      pei_ind_dat_ts_daily_2_fossil <- reactive({to.daily(pei_ind_subset_ts_2_fossil())})
+      pei_ind_dat_ts_hourly_2_fossil <- reactive({to.hourly(pei_ind_subset_ts_2_fossil())})
+      
+      output$PEI_ON_WIND_YEARLY <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_add_series(pei_ind_dat_ts_yearly_2()[,(colnames(pei_ind_dat_ts_yearly_2()) %in% c('pei_ind_dat_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_ind_dat_ts_yearly_2()[,(colnames(pei_ind_dat_ts_yearly_2()) %in% c('pei_ind_dat_ts_2().Low'))], type = "line", name = "Low Wind Load: ", color = "red") %>%
+          hc_add_series(pei_ind_dat_ts_yearly_2_fossil()[,(colnames(pei_ind_dat_ts_yearly_2_fossil()) %in% c('pei_ind_dat_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "pink") %>%
+          hc_add_series(pei_ind_dat_ts_yearly_2_fossil()[,(colnames(pei_ind_dat_ts_yearly_2_fossil()) %in% c('pei_ind_dat_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load: ", color = "blue") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_ON_WIND_WEEKLY <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_add_series(pei_ind_dat_ts_weekly_2()[,(colnames(pei_ind_dat_ts_weekly_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_ind_dat_ts_weekly_2()[,(colnames(pei_ind_dat_ts_weekly_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "area", name = "Low Wind Load: ", color = "red") %>%
+          hc_add_series(pei_ind_dat_ts_weekly_2_fossil()[,(colnames(pei_ind_dat_ts_weekly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "pink") %>%
+          hc_add_series(pei_ind_dat_ts_weekly_2_fossil()[,(colnames(pei_ind_dat_ts_weekly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "area", name = "Low Fossil Load: ", color = "blue") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_ON_WIND_DAILY <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_add_series(pei_ind_dat_ts_daily_2()[,(colnames(pei_ind_dat_ts_daily_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_ind_dat_ts_daily_2()[,(colnames(pei_ind_dat_ts_daily_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "area", name = "Low Wind Load: ", color = "red") %>%
+          hc_add_series(pei_ind_dat_ts_daily_2_fossil()[,(colnames(pei_ind_dat_ts_daily_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "pink") %>%
+          hc_add_series(pei_ind_dat_ts_daily_2_fossil()[,(colnames(pei_ind_dat_ts_daily_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "area", name = "Low Fossil Load: ", color = "blue") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_ON_WIND_HOURLY <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_add_series(pei_ind_dat_ts_hourly_2()[,(colnames(pei_ind_dat_ts_hourly_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_ind_dat_ts_hourly_2()[,(colnames(pei_ind_dat_ts_hourly_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "spline", name = "Low Wind Load: ", color = "red") %>%
+          hc_add_series(pei_ind_dat_ts_hourly_2_fossil()[,(colnames(pei_ind_dat_ts_hourly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "pink") %>%
+          hc_add_series(pei_ind_dat_ts_hourly_2_fossil()[,(colnames(pei_ind_dat_ts_hourly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "spline", name = "Low Fossil Load: ", color = "blue") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_ON_WIND_ALL <- renderUI({
+        highchart() %>%
+          hc_xAxis(type = "datetime") %>% hc_navigator(enabled = TRUE) %>%
+          hc_add_series(pei_ind_subset_ts_2(), type = "line", name = "Wind Load: ", color = "lightgreen")%>%
+          hc_add_series(pei_ind_subset_ts_2_fossil(), type = "line", name = "Fossil Load: ", color = "pink")
+      })
+      en_tm_dsh_pei_2 <- Sys.time()
+      log_info('{difftime(en_tm_dsh_pei_2,st_tm_dsh_pei_2)} sec for PEI Main 2 dashboard')
+      
+      pei_date_ind_3_1 <- reactive({paste(input$pei_dates_3[1],"00:00:00",sep = " ")})
+      pei_date_ind_3_2 <- reactive({paste(input$pei_dates_3[2],"00:00:00",sep = " ")})
+      pei_exp_subset_dat_wind_export <- reactive({subset(pei_ind_dat_wind_export,subset = (pei_ind_dat_wind_export$DATETIME_LOCAL >= pei_date_ind_3_1() & pei_ind_dat_wind_export$DATETIME_LOCAL <= pei_date_ind_3_2()))})
+      pei_exp_subset_dat_wind_local <- reactive({subset(pei_ind_dat_wind_local,subset = (pei_ind_dat_wind_local$DATETIME_LOCAL >= pei_date_ind_3_1() & pei_ind_dat_wind_local$DATETIME_LOCAL <= pei_date_ind_3_2()))})
+      pei_exp_dat_ts <- reactive({xts(pei_ind_dat_wind_export$OBS_VALUE,pei_ind_dat_wind_export$DATETIME_LOCAL)})
+      pei_exp_local_dat_ts <- reactive({xts(pei_ind_dat_wind_local$OBS_VALUE,pei_ind_dat_wind_local$DATETIME_LOCAL)})
+      pei_exp_subset_ts <- reactive({xts(pei_exp_subset_dat_wind_export()$OBS_VALUE,pei_exp_subset_dat_wind_export()$DATETIME_LOCAL)})
+      pei_exp_local_subset_ts <- reactive({xts(pei_exp_subset_dat_wind_local()$OBS_VALUE,pei_exp_subset_dat_wind_local()$DATETIME_LOCAL)})
+      pei_exp_dat_ts_yearly <- reactive({to.yearly(pei_exp_dat_ts())})
+      pei_exp_dat_ts_monthly <- reactive({to.monthly(pei_exp_subset_ts())})
+      pei_exp_dat_ts_weekly <- reactive({to.weekly(pei_exp_subset_ts())})
+      pei_exp_dat_ts_daily <- reactive({to.daily(pei_exp_subset_ts())})
+      pei_exp_dat_ts_hourly <- reactive({to.hourly(pei_exp_subset_ts())})
+      pei_exp_local_dat_ts_yearly <- reactive({to.yearly(pei_exp_local_dat_ts())})
+      pei_exp_local_dat_ts_monthly <- reactive({to.monthly(pei_exp_local_subset_ts())})
+      pei_exp_local_dat_ts_weekly <- reactive({to.weekly(pei_exp_local_subset_ts())})
+      pei_exp_local_dat_ts_daily <- reactive({to.daily(pei_exp_local_subset_ts())})
+      pei_exp_local_dat_ts_hourly <- reactive({to.hourly(pei_exp_local_subset_ts())})
+      
+      output$PEI_EXPORT_YEARLY <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_exp_dat_ts_yearly()[,(colnames(pei_exp_dat_ts_yearly()) %in% c('pei_exp_dat_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_exp_dat_ts_yearly()[,(colnames(pei_exp_dat_ts_yearly()) %in% c('pei_exp_dat_ts().Low'))], type = "line", name = "Low Export Load: ", color = "red") %>%
+          hc_add_series(pei_exp_local_dat_ts_yearly()[,(colnames(pei_exp_local_dat_ts_yearly()) %in% c('pei_exp_local_dat_ts().High'))], type = "line", name = "High Local Load: ", color = "pink") %>%
+          hc_add_series(pei_exp_local_dat_ts_yearly()[,(colnames(pei_exp_local_dat_ts_yearly()) %in% c('pei_exp_local_dat_ts().Low'))], type = "line", name = "Low Local Load: ", color = "blue") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_EXPORT_WEEKLY <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_exp_dat_ts_weekly()[,(colnames(pei_exp_dat_ts_weekly()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_exp_dat_ts_weekly()[,(colnames(pei_exp_dat_ts_weekly()) %in% c('pei_exp_subset_ts().Low'))], type = "area", name = "Low Export Load: ", color = "red") %>%
+          hc_add_series(pei_exp_local_dat_ts_weekly()[,(colnames(pei_exp_local_dat_ts_weekly()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "pink") %>%
+          hc_add_series(pei_exp_local_dat_ts_weekly()[,(colnames(pei_exp_local_dat_ts_weekly()) %in% c('pei_exp_local_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "blue") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_EXPORT_DAILY <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_exp_dat_ts_daily()[,(colnames(pei_exp_dat_ts_daily()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_exp_dat_ts_daily()[,(colnames(pei_exp_dat_ts_daily()) %in% c('pei_exp_subset_ts().Low'))], type = "area", name = "Low Export Load: ", color = "red") %>%
+          hc_add_series(pei_exp_local_dat_ts_daily()[,(colnames(pei_exp_local_dat_ts_daily()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "pink") %>%
+          hc_add_series(pei_exp_local_dat_ts_daily()[,(colnames(pei_exp_local_dat_ts_daily()) %in% c('pei_exp_local_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "blue") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_EXPORT_HOURLY <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_exp_dat_ts_hourly()[,(colnames(pei_exp_dat_ts_hourly()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_exp_dat_ts_hourly()[,(colnames(pei_exp_dat_ts_hourly()) %in% c('pei_exp_subset_ts().Low'))], type = "spline", name = "Low Export Load: ", color = "red") %>%
+          hc_add_series(pei_exp_local_dat_ts_hourly()[,(colnames(pei_exp_local_dat_ts_hourly()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "pink") %>%
+          hc_add_series(pei_exp_local_dat_ts_hourly()[,(colnames(pei_exp_local_dat_ts_hourly()) %in% c('pei_exp_local_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "blue") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_EXPORT_ALL <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% hc_navigator(enabled = TRUE) %>% 
+          hc_add_series(pei_exp_subset_ts(), type = "line", name = "Export Load: ", color = "pink") %>%
+          hc_add_series(pei_exp_local_subset_ts(), type = "line", name = "Local Load: ", color = "lightgreen")
+      })
+      
+      pei_date_ind_4_1 <- reactive({paste(input$pei_dates_4[1],"00:00:00",sep = " ")})
+      pei_date_ind_4_2 <- reactive({paste(input$pei_dates_4[2],"00:00:00",sep = " ")})
+      pei_loc_subset_dat <- reactive({subset(pei_ind_dat_wind_percent,subset = (pei_ind_dat_wind_percent$DATETIME_LOCAL >= pei_date_ind_4_1() & pei_ind_dat_wind_percent$DATETIME_LOCAL <= pei_date_ind_4_2()))})
+      pei_loc_dat_ts <- reactive({xts(pei_ind_dat_wind_percent$OBS_VALUE,pei_ind_dat_wind_percent$DATETIME_LOCAL)})
+      pei_loc_subset_ts <- reactive({xts(pei_loc_subset_dat()$OBS_VALUE,pei_loc_subset_dat()$DATETIME_LOCAL)})
+      pei_loc_dat_ts_yearly <- reactive({to.yearly(pei_loc_dat_ts())})
+      pei_loc_dat_ts_monthly <- reactive({to.monthly(pei_loc_subset_ts())})
+      pei_loc_dat_ts_weekly <- reactive({to.weekly(pei_loc_subset_ts())})
+      pei_loc_dat_ts_daily <- reactive({to.daily(pei_loc_subset_ts())})
+      pei_loc_dat_ts_hourly <- reactive({to.hourly(pei_loc_subset_ts())})
+      
+      
+      output$PEI_LOCAL_YEARLY <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_loc_dat_ts_yearly()[,(colnames(pei_loc_dat_ts_yearly()) %in% c('pei_loc_dat_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_loc_dat_ts_yearly()[,(colnames(pei_loc_dat_ts_yearly()) %in% c('pei_loc_dat_ts().Low'))], type = "line", name = "Low Local Load: ", color = "red") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_LOCAL_WEEKLY <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_loc_dat_ts_weekly()[,(colnames(pei_loc_dat_ts_weekly()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_loc_dat_ts_weekly()[,(colnames(pei_loc_dat_ts_weekly()) %in% c('pei_loc_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "red") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_LOCAL_DAILY <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_loc_dat_ts_daily()[,(colnames(pei_loc_dat_ts_daily()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_loc_dat_ts_daily()[,(colnames(pei_loc_dat_ts_daily()) %in% c('pei_loc_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "red") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_LOCAL_HOURLY <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% 
+          hc_add_series(pei_loc_dat_ts_hourly()[,(colnames(pei_loc_dat_ts_hourly()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
+          hc_add_series(pei_loc_dat_ts_hourly()[,(colnames(pei_loc_dat_ts_hourly()) %in% c('pei_loc_subset_ts().Low'))], type = "spline", name = "Low Local Load: ", color = "red") %>%
+          hc_navigator(enabled = TRUE)})
+      output$PEI_LOCAL_ALL <- renderUI({
+        highchart() %>% 
+          hc_xAxis(type = "datetime") %>% hc_navigator(enabled = TRUE) %>% 
+          hc_add_series(pei_loc_subset_ts(), type = "spline", name = "Local Load: ", color = "brown")
+      })
+    }  
+    else if(pei_status() != 200)
+    {
+      #GPH 1
+      output$PEI_LOCAL_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_LOCAL_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_LOCAL_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_LOCAL_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_LOCAL_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      #GPH 1 END
+      #GPH 2
+      output$PEI_ON_LOAD_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_ON_LOAD_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_ON_LOAD_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_ON_LOAD_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_ON_LOAD_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      #GPH 2 END
+      #GPH 3
+      output$PEI_ON_WIND_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_ON_WIND_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_ON_WIND_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_ON_WIND_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_ON_WIND_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      #GPH 3 END
+      #GPH 4
+      output$PEI_EXPORT_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_EXPORT_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_EXPORT_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_EXPORT_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      output$PEI_EXPORT_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='pei_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",pei_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+      #GPH 4 END
+      
+      log_error("Error Dashboard started - provincial page, Status:{pei_status_ind()}")
+    }
   })
   
-  output$PEI_ON_LOAD_YEARLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_ind_dat_ts_yearly()[,(colnames(pei_ind_dat_ts_yearly()) %in% c('pei_ind_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_ind_dat_ts_yearly()[,(colnames(pei_ind_dat_ts_yearly()) %in% c('pei_ind_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_ON_LOAD_WEEKLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_ind_dat_ts_weekly()[,(colnames(pei_ind_dat_ts_weekly()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_ind_dat_ts_weekly()[,(colnames(pei_ind_dat_ts_weekly()) %in% c('pei_ind_subset_ts().Low'))], type = "area", name = "Low Load: ", color = "red") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_ON_LOAD_DAILY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_ind_dat_ts_daily()[,(colnames(pei_ind_dat_ts_daily()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_ind_dat_ts_daily()[,(colnames(pei_ind_dat_ts_daily()) %in% c('pei_ind_subset_ts().Low'))], type = "area", name = "Low Load: ", color = "red") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_ON_LOAD_HOURLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_ind_dat_ts_hourly()[,(colnames(pei_ind_dat_ts_hourly()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_ind_dat_ts_hourly()[,(colnames(pei_ind_dat_ts_hourly()) %in% c('pei_ind_subset_ts().Low'))], type = "spline", name = "Low Load: ", color = "red") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_ON_LOAD_ALL <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% hc_navigator(enabled = TRUE) %>% 
-      hc_add_series(pei_ind_subset_ts(), type = "line", name = "Load: ")
-  })
-  
-  pei_date_ind_2_1 <- reactive({paste(input$pei_dates_2[1],"00:00:00",sep = " ")})
-  pei_date_ind_2_2 <- reactive({paste(input$pei_dates_2[2],"00:00:00",sep = " ")})
-  pei_ind_subset_dat_2 <- reactive({subset(pei_ind_dat,subset = (pei_ind_dat$Date_time_local >= pei_date_ind_2_1() & pei_ind_dat$Date_time_local <= pei_date_ind_2_2()))})
-  pei_ind_dat_ts_2 <- reactive({xts(pei_ind_dat$on_island_wind,pei_ind_dat$Date_time_local)})
-  pei_ind_dat_ts_2_fossil <- reactive({xts(pei_ind_dat$on_island_fossil,pei_ind_dat$Date_time_local)})
-  pei_ind_subset_ts_2 <- reactive({xts(pei_ind_subset_dat_2()$on_island_wind,pei_ind_subset_dat_2()$Date_time_local)})
-  pei_ind_subset_ts_2_fossil <- reactive({xts(pei_ind_subset_dat_2()$on_island_fossil,pei_ind_subset_dat_2()$Date_time_local)})
-  pei_ind_dat_ts_yearly_2 <- reactive({to.yearly(pei_ind_dat_ts_2())})
-  pei_ind_dat_ts_monthly_2 <- reactive({to.monthly(pei_ind_subset_ts_2())})
-  pei_ind_dat_ts_weekly_2 <- reactive({to.weekly(pei_ind_subset_ts_2())})
-  pei_ind_dat_ts_daily_2 <- reactive({to.daily(pei_ind_subset_ts_2())})
-  pei_ind_dat_ts_hourly_2 <- reactive({to.hourly(pei_ind_subset_ts_2())})
-  pei_ind_dat_ts_yearly_2_fossil <- reactive({to.yearly(pei_ind_dat_ts_2_fossil())})
-  pei_ind_dat_ts_monthly_2_fossil<- reactive({to.monthly(pei_ind_subset_ts_2_fossil())})
-  pei_ind_dat_ts_weekly_2_fossil <- reactive({to.weekly(pei_ind_subset_ts_2_fossil())})
-  pei_ind_dat_ts_daily_2_fossil <- reactive({to.daily(pei_ind_subset_ts_2_fossil())})
-  pei_ind_dat_ts_hourly_2_fossil <- reactive({to.hourly(pei_ind_subset_ts_2_fossil())})
-  
-  output$PEI_ON_WIND_YEARLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_ind_dat_ts_yearly_2()[,(colnames(pei_ind_dat_ts_yearly_2()) %in% c('pei_ind_dat_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_ind_dat_ts_yearly_2()[,(colnames(pei_ind_dat_ts_yearly_2()) %in% c('pei_ind_dat_ts_2().Low'))], type = "line", name = "Low Wind Load: ", color = "red") %>%
-      hc_add_series(pei_ind_dat_ts_yearly_2_fossil()[,(colnames(pei_ind_dat_ts_yearly_2_fossil()) %in% c('pei_ind_dat_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "pink") %>%
-      hc_add_series(pei_ind_dat_ts_yearly_2_fossil()[,(colnames(pei_ind_dat_ts_yearly_2_fossil()) %in% c('pei_ind_dat_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load: ", color = "blue") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_ON_WIND_WEEKLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_ind_dat_ts_weekly_2()[,(colnames(pei_ind_dat_ts_weekly_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_ind_dat_ts_weekly_2()[,(colnames(pei_ind_dat_ts_weekly_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "area", name = "Low Wind Load: ", color = "red") %>%
-      hc_add_series(pei_ind_dat_ts_weekly_2_fossil()[,(colnames(pei_ind_dat_ts_weekly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "pink") %>%
-      hc_add_series(pei_ind_dat_ts_weekly_2_fossil()[,(colnames(pei_ind_dat_ts_weekly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "area", name = "Low Fossil Load: ", color = "blue") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_ON_WIND_DAILY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_ind_dat_ts_daily_2()[,(colnames(pei_ind_dat_ts_daily_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_ind_dat_ts_daily_2()[,(colnames(pei_ind_dat_ts_daily_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "area", name = "Low Wind Load: ", color = "red") %>%
-      hc_add_series(pei_ind_dat_ts_daily_2_fossil()[,(colnames(pei_ind_dat_ts_daily_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "pink") %>%
-      hc_add_series(pei_ind_dat_ts_daily_2_fossil()[,(colnames(pei_ind_dat_ts_daily_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "area", name = "Low Fossil Load: ", color = "blue") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_ON_WIND_HOURLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_ind_dat_ts_hourly_2()[,(colnames(pei_ind_dat_ts_hourly_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_ind_dat_ts_hourly_2()[,(colnames(pei_ind_dat_ts_hourly_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "spline", name = "Low Wind Load: ", color = "red") %>%
-      hc_add_series(pei_ind_dat_ts_hourly_2_fossil()[,(colnames(pei_ind_dat_ts_hourly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "pink") %>%
-      hc_add_series(pei_ind_dat_ts_hourly_2_fossil()[,(colnames(pei_ind_dat_ts_hourly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "spline", name = "Low Fossil Load: ", color = "blue") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_ON_WIND_ALL <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% hc_navigator(enabled = TRUE) %>% 
-      hc_add_series(pei_ind_subset_ts_2(), type = "line", name = "Wind Load: ", color = "lightgreen")%>%
-      hc_add_series(pei_ind_subset_ts_2_fossil(), type = "line", name = "Fossil Load: ", color = "pink")
-  })
-  
-  pei_date_ind_3_1 <- reactive({paste(input$pei_dates_3[1],"00:00:00",sep = " ")})
-  pei_date_ind_3_2 <- reactive({paste(input$pei_dates_3[2],"00:00:00",sep = " ")})
-  pei_exp_subset_dat <- reactive({subset(pei_ind_dat,subset = (pei_ind_dat$Date_time_local >= pei_date_ind_3_1() & pei_ind_dat$Date_time_local <= pei_date_ind_3_2()))})
-  pei_exp_dat_ts <- reactive({xts(pei_ind_dat$wind_export,pei_ind_dat$Date_time_local)})
-  pei_exp_local_dat_ts <- reactive({xts(pei_ind_dat$wind_local,pei_ind_dat$Date_time_local)})
-  pei_exp_subset_ts <- reactive({xts(pei_exp_subset_dat()$wind_export,pei_exp_subset_dat()$Date_time_local)})
-  pei_exp_local_subset_ts <- reactive({xts(pei_exp_subset_dat()$wind_local,pei_exp_subset_dat()$Date_time_local)})
-  pei_exp_dat_ts_yearly <- reactive({to.yearly(pei_exp_dat_ts())})
-  pei_exp_dat_ts_monthly <- reactive({to.monthly(pei_exp_subset_ts())})
-  pei_exp_dat_ts_weekly <- reactive({to.weekly(pei_exp_subset_ts())})
-  pei_exp_dat_ts_daily <- reactive({to.daily(pei_exp_subset_ts())})
-  pei_exp_dat_ts_hourly <- reactive({to.hourly(pei_exp_subset_ts())})
-  pei_exp_local_dat_ts_yearly <- reactive({to.yearly(pei_exp_local_dat_ts())})
-  pei_exp_local_dat_ts_monthly <- reactive({to.monthly(pei_exp_local_subset_ts())})
-  pei_exp_local_dat_ts_weekly <- reactive({to.weekly(pei_exp_local_subset_ts())})
-  pei_exp_local_dat_ts_daily <- reactive({to.daily(pei_exp_local_subset_ts())})
-  pei_exp_local_dat_ts_hourly <- reactive({to.hourly(pei_exp_local_subset_ts())})
-  
-  output$PEI_EXPORT_YEARLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_exp_dat_ts_yearly()[,(colnames(pei_exp_dat_ts_yearly()) %in% c('pei_exp_dat_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_exp_dat_ts_yearly()[,(colnames(pei_exp_dat_ts_yearly()) %in% c('pei_exp_dat_ts().Low'))], type = "line", name = "Low Export Load: ", color = "red") %>%
-      hc_add_series(pei_exp_local_dat_ts_yearly()[,(colnames(pei_exp_local_dat_ts_yearly()) %in% c('pei_exp_local_dat_ts().High'))], type = "line", name = "High Local Load: ", color = "pink") %>%
-      hc_add_series(pei_exp_local_dat_ts_yearly()[,(colnames(pei_exp_local_dat_ts_yearly()) %in% c('pei_exp_local_dat_ts().Low'))], type = "line", name = "Low Local Load: ", color = "blue") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_EXPORT_WEEKLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_exp_dat_ts_weekly()[,(colnames(pei_exp_dat_ts_weekly()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_exp_dat_ts_weekly()[,(colnames(pei_exp_dat_ts_weekly()) %in% c('pei_exp_subset_ts().Low'))], type = "area", name = "Low Export Load: ", color = "red") %>%
-      hc_add_series(pei_exp_local_dat_ts_weekly()[,(colnames(pei_exp_local_dat_ts_weekly()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "pink") %>%
-      hc_add_series(pei_exp_local_dat_ts_weekly()[,(colnames(pei_exp_local_dat_ts_weekly()) %in% c('pei_exp_local_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "blue") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_EXPORT_DAILY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_exp_dat_ts_daily()[,(colnames(pei_exp_dat_ts_daily()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_exp_dat_ts_daily()[,(colnames(pei_exp_dat_ts_daily()) %in% c('pei_exp_subset_ts().Low'))], type = "area", name = "Low Export Load: ", color = "red") %>%
-      hc_add_series(pei_exp_local_dat_ts_daily()[,(colnames(pei_exp_local_dat_ts_daily()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "pink") %>%
-      hc_add_series(pei_exp_local_dat_ts_daily()[,(colnames(pei_exp_local_dat_ts_daily()) %in% c('pei_exp_local_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "blue") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_EXPORT_HOURLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_exp_dat_ts_hourly()[,(colnames(pei_exp_dat_ts_hourly()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_exp_dat_ts_hourly()[,(colnames(pei_exp_dat_ts_hourly()) %in% c('pei_exp_subset_ts().Low'))], type = "spline", name = "Low Export Load: ", color = "red") %>%
-      hc_add_series(pei_exp_local_dat_ts_hourly()[,(colnames(pei_exp_local_dat_ts_hourly()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "pink") %>%
-      hc_add_series(pei_exp_local_dat_ts_hourly()[,(colnames(pei_exp_local_dat_ts_hourly()) %in% c('pei_exp_local_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "blue") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_EXPORT_ALL <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% hc_navigator(enabled = TRUE) %>% 
-      hc_add_series(pei_exp_subset_ts(), type = "line", name = "Export Load: ", color = "pink") %>%
-      hc_add_series(pei_exp_local_subset_ts(), type = "line", name = "Local Load: ", color = "lightgreen")
-  })
-  
-  pei_date_ind_4_1 <- reactive({paste(input$pei_dates_4[1],"00:00:00",sep = " ")})
-  pei_date_ind_4_2 <- reactive({paste(input$pei_dates_4[2],"00:00:00",sep = " ")})
-  pei_loc_subset_dat <- reactive({subset(pei_ind_dat,subset = (pei_ind_dat$Date_time_local >= pei_date_ind_4_1() & pei_ind_dat$Date_time_local <= pei_date_ind_4_2()))})
-  pei_loc_dat_ts <- reactive({xts(pei_ind_dat$percentage_wind,pei_ind_dat$Date_time_local)})
-  pei_loc_subset_ts <- reactive({xts(pei_loc_subset_dat()$percentage_wind,pei_loc_subset_dat()$Date_time_local)})
-  pei_loc_dat_ts_yearly <- reactive({to.yearly(pei_loc_dat_ts())})
-  pei_loc_dat_ts_monthly <- reactive({to.monthly(pei_loc_subset_ts())})
-  pei_loc_dat_ts_weekly <- reactive({to.weekly(pei_loc_subset_ts())})
-  pei_loc_dat_ts_daily <- reactive({to.daily(pei_loc_subset_ts())})
-  pei_loc_dat_ts_hourly <- reactive({to.hourly(pei_loc_subset_ts())})
-  
-  
-  output$PEI_LOCAL_YEARLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_loc_dat_ts_yearly()[,(colnames(pei_loc_dat_ts_yearly()) %in% c('pei_loc_dat_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_loc_dat_ts_yearly()[,(colnames(pei_loc_dat_ts_yearly()) %in% c('pei_loc_dat_ts().Low'))], type = "line", name = "Low Local Load: ", color = "red") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_LOCAL_WEEKLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_loc_dat_ts_weekly()[,(colnames(pei_loc_dat_ts_weekly()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_loc_dat_ts_weekly()[,(colnames(pei_loc_dat_ts_weekly()) %in% c('pei_loc_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "red") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_LOCAL_DAILY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_loc_dat_ts_daily()[,(colnames(pei_loc_dat_ts_daily()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_loc_dat_ts_daily()[,(colnames(pei_loc_dat_ts_daily()) %in% c('pei_loc_subset_ts().Low'))], type = "area", name = "Low Local Load: ", color = "red") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_LOCAL_HOURLY <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% 
-      hc_add_series(pei_loc_dat_ts_hourly()[,(colnames(pei_loc_dat_ts_hourly()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
-      hc_add_series(pei_loc_dat_ts_hourly()[,(colnames(pei_loc_dat_ts_hourly()) %in% c('pei_loc_subset_ts().Low'))], type = "spline", name = "Low Local Load: ", color = "red") %>%
-      hc_navigator(enabled = TRUE)})
-  output$PEI_LOCAL_ALL <- renderHighchart({
-    highchart() %>% 
-      hc_xAxis(type = "datetime") %>% hc_navigator(enabled = TRUE) %>% 
-      hc_add_series(pei_loc_subset_ts(), type = "spline", name = "Local Load: ", color = "brown")
-  })
+  #PRINCE EDWARD ISLAND END
   
   nb_date_ind_1_1 <- reactive({paste(input$nb_dates_1[1],"00:00:00",sep = " ")})
   nb_date_ind_1_2 <- reactive({paste(input$nb_dates_1[2],"00:00:00",sep = " ")})
@@ -4556,18 +5056,7 @@ server <- function(input, output, session) {
   data_dict_df_nb <- as.data.frame(data_dict_nb)
   output$DATA_DICTIONARY_NB <- renderDataTable({data_dict_df_nb})
   
-  observeEvent(nsload_data_pre(),{
-    #jobs <- jobs_list(workspace = "https://adb-5718177041572308.8.azuredatabricks.net", token = "dapi0eb9c309016768826856d64b9787ce4a")
-    #jb_df <- jobs$response_tidy$job_id
-    #for (jb_id in jb_df)
-    #{
-    
-    #jb_run <- runs_list(job_id = jb_id,workspace = "https://adb-5718177041572308.8.azuredatabricks.net", token = "dapi0eb9c309016768826856d64b9787ce4a")
-    #rn_id <- head(jb_run$response_tidy$runs.run_id,1)
-    #rn_stat <- get_run_status(run_id = rn_id,workspace = "https://adb-5718177041572308.8.azuredatabricks.net", token = "dapi0eb9c309016768826856d64b9787ce4a")
-    #state <- rn_stat$response_list$state$result_state
-    #print(paste(jb_id,state,sep = ":"))
-    #}
+  
     
     output$SERVER_STATUS <- renderUI({
       tags$table(
@@ -4575,18 +5064,49 @@ server <- function(input, output, session) {
         style = "width:100%",
         tags$tr(
           tags$th("Province"),
-          tags$th("Status")
+          tags$th("Status-API"),
+          tags$th("Status-Source")
         ),
         tags$tr(
           tags$td("Ontario"),
-          tags$td("Ok")
+          tags$td(on_api_stat()),
+          tags$td(on_src_stat())
         ),
         tags$tr(
           tags$td("Prince Edward Island"),
-          tags$td("Ok")
+          tags$td(pei_api_stat()),
+          tags$td(pei_src_stat())
+        ),
+        tags$tr(
+          tags$td("Nova Scotia"),
+          tags$td(ns_api_stat()),
+          tags$td(ns_src_stat())
+        ),
+        tags$tr(
+          tags$td("New Brunswick"),
+          tags$td(nb_api_stat()),
+          tags$td(nb_src_stat())
+        ),
+        tags$tr(
+          tags$td("British Colombia"),
+          tags$td(bc_api_stat()),
+          tags$td(bc_src_stat())
+        ),
+        tags$tr(
+          tags$td("Newfoundland & Labrador"),
+          tags$td(bc_api_stat()),
+          tags$td(bc_src_stat())
+        ),
+        tags$tr(
+          tags$td("Alberta"),
+          tags$td("ok")
+        ),
+        tags$tr(
+          tags$td("Quebec"),
+          tags$td(qb_api_stat()),
+          tags$td(qb_src_stat())
         )
       )
-    })
   })
   
   
@@ -4619,11 +5139,11 @@ server <- function(input, output, session) {
     updateTabsetPanel(session = session, inputId = "rted_menu", selected = "BC")
   })
   
-  observeEvent(input$button_pei_ind_1,{
-    createAlert(session, "NB_1", content = paste("please select this table:",config$provinces$NB$table1, sep = " "), style = "info", dismiss = TRUE)
-    Sys.sleep(0.5)
-    updateTabsetPanel(session = session, inputId = "rted_menu", selected = "Dwn") 
-  })
+  # observeEvent(input$button_pei_ind_1,{
+  #   createAlert(session, "NB_1", content = paste("please select this table:",config$provinces$NB$table1, sep = " "), style = "info", dismiss = TRUE)
+  #   Sys.sleep(0.5)
+  #   updateTabsetPanel(session = session, inputId = "rted_menu", selected = "Dwn") 
+  # })
   
   
   observeEvent(input$Btn_EN,{
@@ -4725,10 +5245,10 @@ server <- function(input, output, session) {
                            end = tail(on_ind_dat$date_time_local,1),
                            max = tail(on_ind_dat$date_time_local,1))
       updateDateRangeInput(session, "pei_date_range",
-                           start = head(pei_ind_dat$Date_time_local,1),
-                           min = head(pei_ind_dat$Date_time_local,1),
-                           end = tail(pei_ind_dat$Date_time_local,1),
-                           max = tail(pei_ind_dat$Date_time_local,1))
+                           start = tail(pei_ind_dat_load$DATETIME_LOCAL,1),
+                           min = tail(pei_ind_dat_load$DATETIME_LOCAL,1),
+                           end = head(pei_ind_dat_load$DATETIME_LOCAL,1),
+                           max = head(pei_ind_dat_load$DATETIME_LOCAL,1))
       updateDateRangeInput(session, "nfl_date_range",
                            start = head(nfl_ind_dat$Date_time_local,1),
                            min = head(nfl_ind_dat$Date_time_local,1),
@@ -4886,14 +5406,14 @@ server <- function(input, output, session) {
           output$data_pei_1 <- downloadHandler(
             
             filename = function() {
-              paste(config$provinces$PEI$table1,"csv",sep = ".")
+              paste("PEI-TABLE","csv",sep = ".")
             },
             content = function(file)
             {
               showNotification("Your File is Downloading, Please wait for some time.", type="message")
               date_1 <- paste(input$pei_date_range[1],"00:00:00",sep = " ")
               date_2 <- paste(input$pei_date_range[2],"00:00:00",sep = " ")
-              peiload_subset_download <- subset(pei_ind_dat,subset = (pei_ind_dat$Date_time_local >= date_1 & pei_ind_dat$Date_time_local <= date_2))
+              peiload_subset_download <- subset(pei_ind_dat_load,subset = (pei_ind_dat_load$DATETIME_LOCAL >= date_1 & pei_ind_dat_load$DATETIME_LOCAL <= date_2))
               write.csv(peiload_subset_download, file, row.names = FALSE)
             }
           )
@@ -4990,25 +5510,25 @@ server <- function(input, output, session) {
       #updating the dates after the data loads (PEI)
       pei_dd_1 <- as.Date(Sys.Date())-(7)
       pei_dd_1_1 <- paste(pei_dd_1,"00:00:00",sep=" ")
-      pei_dd_2_2 <- as.Date(tail(pei_ind_dat$Date_time_local,1))
+      pei_dd_2_2 <- as.Date(head(pei_ind_dat_load$DATETIME_LOCAL,1))
       updateSliderInput(session, "pei_dates_1",
-                        min = as.Date(head(pei_ind_dat$Date_time_local,1),"%Y-%m-%d"),
-                        max = as.Date(tail(pei_ind_dat$Date_time_local,1),"%Y-%m-%d"),
+                        min = as.Date(tail(pei_ind_dat_load$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                        max = as.Date(head(pei_ind_dat_load$DATETIME_LOCAL,1),"%Y-%m-%d"),
                         value=c(as.Date(pei_dd_1_1),pei_dd_2_2),
                         timeFormat="%Y-%m-%d")
       updateSliderInput(session, "pei_dates_2",
-                        min = as.Date(head(pei_ind_dat$Date_time_local,1),"%Y-%m-%d"),
-                        max = as.Date(tail(pei_ind_dat$Date_time_local,1),"%Y-%m-%d"),
+                        min = as.Date(tail(pei_ind_dat_load$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                        max = as.Date(head(pei_ind_dat_load$DATETIME_LOCAL,1),"%Y-%m-%d"),
                         value=c(as.Date(pei_dd_1_1),pei_dd_2_2),
                         timeFormat="%Y-%m-%d")
       updateSliderInput(session, "pei_dates_3",
-                        min = as.Date(head(pei_ind_dat$Date_time_local,1),"%Y-%m-%d"),
-                        max = as.Date(tail(pei_ind_dat$Date_time_local,1),"%Y-%m-%d"),
+                        min = as.Date(tail(pei_ind_dat_load$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                        max = as.Date(head(pei_ind_dat_load$DATETIME_LOCAL,1),"%Y-%m-%d"),
                         value=c(as.Date(pei_dd_1_1),pei_dd_2_2),
                         timeFormat="%Y-%m-%d")
       updateSliderInput(session, "pei_dates_4",
-                        min = as.Date(head(pei_ind_dat$Date_time_local,1),"%Y-%m-%d"),
-                        max = as.Date(tail(pei_ind_dat$Date_time_local,1),"%Y-%m-%d"),
+                        min = as.Date(tail(pei_ind_dat_load$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                        max = as.Date(head(pei_ind_dat_load$DATETIME_LOCAL,1),"%Y-%m-%d"),
                         value=c(as.Date(pei_dd_1_1),pei_dd_2_2),
                         timeFormat="%Y-%m-%d")
     }
