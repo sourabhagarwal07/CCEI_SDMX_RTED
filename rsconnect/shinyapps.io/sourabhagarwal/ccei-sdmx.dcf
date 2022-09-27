@@ -5,9 +5,9 @@ account: sourabhagarwal
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6489608
-bundleId: 6331850
+bundleId: 6343102
 url: https://sourabhagarwal.shinyapps.io/ccei-sdmx/
-when: 1663949951.65822
-lastSyncTime: 1663949951.65822
+when: 1664283915.7494
+lastSyncTime: 1664283915.7494
 asMultiple: FALSE
 asStatic: FALSE

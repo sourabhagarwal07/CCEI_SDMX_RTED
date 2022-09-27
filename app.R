@@ -39,6 +39,8 @@ i18n$set_translation_language("en")
 dashboard_ui_slider_date_end <- Sys.Date()
 dashboard_ui_slider_date_start <- paste(Sys.Date()-7,"00:00:00",sep=" ")
 
+colour_codes_graphs <- list("Purple","lightblue","blue","black","orange","maroon")
+
 
 
 ui <- dashboardPage(
@@ -222,13 +224,18 @@ font-style: italic;
                          fluidRow(div(h1(id = "header_title",i18n$t("High-frequency electricity data (HFED): Interactive dashboard")),
                                       div(id = "lang_btn",
                                           bsButton("Btn_EN","English",icon = icon("language"),style = "primary",size = "small",type = "action"),
-                                          bsButton("Btn_FR","French",icon = icon("language"),style = "primary",size = "small",type = "action")))),
+                                          bsButton("Btn_FR","French",icon = icon("language"),style = "primary",size = "small",type = "action"),
+                                          bsButton("Btn_acc","Accessibility",icon = icon("universal-access"),style = "primary",size = "small",type = "action"),
+                                          bsModal("mod_acc","Accessibility","Btn_acc",
+                                                  selectInput("color_choice",h3("Colour Options"),choices = colour_codes_graphs, selected="maroon")
+                                                  )
+                                      ))),
                          br(),
                          
-                         fluidRow(h3(id = "content_para",p("The HFED dashboard makes it easy to access important Canadian electricity information and supports Canada's path to net-zero emissions by providing high-quality electricity data in near real-time."), 
-                                     p("Developed by the Canadian Center for Energy Information (CCEI) in collaboration with Natural Resources Canada and the Canadian Energy Regulator, the HFED dashboard uses web scraping to gather publicly-available electricity data from provincial and territorial utilities across Canada. These data are then consolidated into a standardized central database for easy access and analysis, including historical data for select provinces."),
-                                     p("On the dashboard landing page below, data are displayed for available provinces and territories at the hourly level, with new data points being added as they become available. To download data files and access more detailed information about a particular province or territory (e.g. fuel type, imports and exports, and wind percentage) simply select that region."),
-                                     p("For more energy information, check out",a(href="https://energy-information.canada.ca/"," Canadian Center for Energy Information"), "- a convenient one-stop virtual shop for independent and trusted information on energy in Canada.")
+                         fluidRow(h3(id = "content_para",p(i18n$t("The HFED dashboard makes it easy to access important Canadian electricity information and supports Canada's path to net-zero emissions by providing high-quality electricity data in near real-time.")), 
+                                     p(i18n$t("Developed by the Canadian Center for Energy Information (CCEI) in collaboration with Natural Resources Canada and the Canadian Energy Regulator, the HFED dashboard uses web scraping to gather publicly-available electricity data from provincial and territorial utilities across Canada. These data are then consolidated into a standardized central database for easy access and analysis, including historical data for select provinces.")),
+                                     p(i18n$t("On the dashboard landing page below, data are displayed for available provinces and territories at the hourly level, with new data points being added as they become available. To download data files and access more detailed information about a particular province or territory (e.g. fuel type, imports and exports, and wind percentage) simply select that region.")),
+                                     p(i18n$t("For more energy information, check out"),a(href="https://energy-information.canada.ca",i18n$t(" Canadian Center for Energy Information ")),"-", i18n$t(" a convenient one-stop virtual shop for independent and trusted information on energy in Canada."))
                          )),
                          br(),
                          fluidRow(box(title = HTML(paste("  <i id='bd_twr' class='fas fa-broadcast-tower'></i>",i18n$t("Live Data"))),id="live_dashboard", status = "primary", width="100%" ,solidHeader = TRUE,
@@ -311,7 +318,17 @@ font-style: italic;
                         fluidRow(div(h2(id = "header_title",i18n$t("Prince Edward Island")),
                                      div(id = "lang_btn",
                                          bsButton("Btn_EN_pei","English",icon = icon("language"),style = "primary",size = "small",type = "action"),
-                                         bsButton("Btn_FR_pei","French",icon = icon("language"),style = "primary",size = "small",type = "action")))),
+                                         bsButton("Btn_FR_pei","French",icon = icon("language"),style = "primary",size = "small",type = "action"),
+                                         bsButton("Btn_acc_pei","Accessibility",icon = icon("universal-access"),style = "primary",size = "small",type = "action"),
+                                         bsModal("mod_acc_pei","Accessibility","Btn_acc_pei",
+                                                 selectInput("color_choice_pei_1",h3("Colour Options - 1"),choices = colour_codes_graphs, selected="maroon"),
+                                                 selectInput("color_choice_pei_2",h3("Colour Options - 2"),choices = colour_codes_graphs, selected="blue"),
+                                                 selectInput("color_choice_pei_3",h3("Colour Options - 3"),choices = colour_codes_graphs, selected="orange"),
+                                                 selectInput("color_choice_pei_4",h3("Colour Options - 4"),choices = colour_codes_graphs, selected="lightblue"),
+                                                 helpText("Each line in graph is represented by colour options, colour options can be changed dynamically for better view.")
+                                         )
+                                         
+                                     ))),
                         
                         br(),
                         fluidRow(
@@ -799,7 +816,7 @@ font-style: italic;
                         fluidRow(
                           column(width =10, offset = 2,
                                  box(
-                                   title = "Total Production", width = 10, status = "warning", solidHeader = TRUE,
+                                   title = "Demand", width = 10, status = "warning", solidHeader = TRUE,
                                    collapsible = TRUE,
                                    fluidRow(column(width = 2, selectInput("select_fr_qb_1", h4("Frequency"), 
                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
@@ -811,15 +828,15 @@ font-style: italic;
                                                                                                                                                  timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_qb_1 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_TOT_PRODUCTION_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_DEMAND_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_1 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_TOT_PRODUCTION_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_DEMAND_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_1 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_TOT_PRODUCTION_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_DEMAND_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_1 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_TOT_PRODUCTION_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_DEMAND_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_1 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_TOT_PRODUCTION_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_DEMAND_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
@@ -828,7 +845,7 @@ font-style: italic;
                         fluidRow(
                           column(width =10, offset = 2,
                                  box(
-                                   title = "Fuel Type - I", width = 10, status = "warning", solidHeader = TRUE,
+                                   title = "Hydro", width = 10, status = "warning", solidHeader = TRUE,
                                    collapsible = TRUE,
                                    fluidRow(column(width = 2, selectInput("select_fr_qb_2", h4("Frequency"), 
                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
@@ -840,15 +857,15 @@ font-style: italic;
                                                                                                                                                  timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_qb_2 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_1_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_HYDRO_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_2 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_1_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_HYDRO_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_2 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_1_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_HYDRO_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_2 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_1_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_HYDRO_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_2 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_1_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_HYDRO_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
@@ -857,7 +874,7 @@ font-style: italic;
                         fluidRow(
                           column(width =10, offset = 2,
                                  box(
-                                   title = "Fuel Type - II", width = 10, status = "warning", solidHeader = TRUE,
+                                   title = "OTHER", width = 10, status = "warning", solidHeader = TRUE,
                                    collapsible = TRUE,
                                    fluidRow(column(width = 2, selectInput("select_fr_qb_3", h4("Frequency"), 
                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
@@ -869,15 +886,15 @@ font-style: italic;
                                                                                                                                                  timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_qb_3 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_2_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_OTHER_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_3 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_2_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_OTHER_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_3 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_2_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_OTHER_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_3 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_2_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_OTHER_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_3 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_2_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_OTHER_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
@@ -886,7 +903,7 @@ font-style: italic;
                         fluidRow(
                           column(width =10, offset = 2,
                                  box(
-                                   title = "Fuel Type - III", width = 10, status = "warning", solidHeader = TRUE,
+                                   title = "Solar", width = 10, status = "warning", solidHeader = TRUE,
                                    collapsible = TRUE,
                                    fluidRow(column(width = 2, selectInput("select_fr_qb_4", h4("Frequency"), 
                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
@@ -898,15 +915,15 @@ font-style: italic;
                                                                                                                                                  timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_qb_4 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_3_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_SOLAR_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_4 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_3_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_SOLAR_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_4 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_3_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_SOLAR_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_4 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_3_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_SOLAR_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_4 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_FUEL_3_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_SOLAR_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
@@ -915,7 +932,7 @@ font-style: italic;
                         fluidRow(
                           column(width =10, offset = 2,
                                  box(
-                                   title = "Electricity Statistics - I", width = 10, status = "warning", solidHeader = TRUE,
+                                   title = "Thermal", width = 10, status = "warning", solidHeader = TRUE,
                                    collapsible = TRUE,
                                    fluidRow(column(width = 2, selectInput("select_fr_qb_5", h4("Frequency"), 
                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
@@ -927,15 +944,15 @@ font-style: italic;
                                                                                                                                                  timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_qb_5 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_1_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_THERMAL_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_5 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_1_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_THERMAL_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_5 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_1_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_THERMAL_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_5 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_1_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_THERMAL_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_5 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_1_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_THERMAL_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
@@ -944,7 +961,7 @@ font-style: italic;
                         fluidRow(
                           column(width =10, offset = 2,
                                  box(
-                                   title = "Electricity Statistics - II", width = 10, status = "warning", solidHeader = TRUE,
+                                   title = "Total production", width = 10, status = "warning", solidHeader = TRUE,
                                    collapsible = TRUE,
                                    fluidRow(column(width = 2, selectInput("select_fr_qb_6", h4("Frequency"), 
                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
@@ -956,15 +973,15 @@ font-style: italic;
                                                                                                                                                  timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_qb_6 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_2_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_TOTPROD_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_6 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_2_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_TOTPROD_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_6 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_2_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_TOTPROD_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_6 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_2_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_TOTPROD_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_6 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_2_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_TOTPROD_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
@@ -973,7 +990,7 @@ font-style: italic;
                         fluidRow(
                           column(width =10, offset = 2,
                                  box(
-                                   title = "Electricity Statistics - III", width = 10, status = "warning", solidHeader = TRUE,
+                                   title = "Wind", width = 10, status = "warning", solidHeader = TRUE,
                                    collapsible = TRUE,
                                    fluidRow(column(width = 2, selectInput("select_fr_qb_7", h4("Frequency"), 
                                                                           choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
@@ -985,165 +1002,21 @@ font-style: italic;
                                                                                                                                                  timeFormat="%Y-%m-%d")))
                                    ),
                                    conditionalPanel( condition = "input.select_fr_qb_7 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_3_YEARLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_WIND_YEARLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_7 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_3_ALL"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_WIND_ALL"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_7 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_3_WEEKLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_WIND_WEEKLY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_7 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_3_DAILY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_WIND_DAILY"),type = "html", loader = "loader3"))),
                                    conditionalPanel( condition = "input.select_fr_qb_7 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_3_HOURLY"),type = "html", loader = "loader3"))),
+                                                     fluidRow(withLoader(uiOutput("QB_WIND_HOURLY"),type = "html", loader = "loader3"))),
                                    fluidRow(
                                      column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
                                      column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
                                    )
-                                 ))),
-                        fluidRow(
-                          column(width =10, offset = 2,
-                                 box(
-                                   title = "Electricity Statistics - IV", width = 10, status = "warning", solidHeader = TRUE,
-                                   collapsible = TRUE,
-                                   fluidRow(column(width = 2, selectInput("select_fr_qb_8", h4("Frequency"), 
-                                                                          choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
-                                            column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_qb_8 != 1",sliderInput("qb_dates_8",
-                                                                                                                                                 "Dates",
-                                                                                                                                                 min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
-                                                                                                                                                 max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
-                                                                                                                                                 value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
-                                                                                                                                                 timeFormat="%Y-%m-%d")))
-                                   ),
-                                   conditionalPanel( condition = "input.select_fr_qb_8 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_4_YEARLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_8 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_4_ALL"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_8 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_4_WEEKLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_8 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_4_DAILY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_8 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_4_HOURLY"),type = "html", loader = "loader3"))),
-                                   fluidRow(
-                                     column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
-                                     column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
-                                   )
-                                 ))),
-                        fluidRow(
-                          column(width =10, offset = 2,
-                                 box(
-                                   title = "Electricity Statistics - V", width = 10, status = "warning", solidHeader = TRUE,
-                                   collapsible = TRUE,
-                                   fluidRow(column(width = 2, selectInput("select_fr_qb_9", h4("Frequency"), 
-                                                                          choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
-                                            column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_qb_9 != 1",sliderInput("qb_dates_9",
-                                                                                                                                                 "Dates",
-                                                                                                                                                 min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
-                                                                                                                                                 max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
-                                                                                                                                                 value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
-                                                                                                                                                 timeFormat="%Y-%m-%d")))
-                                   ),
-                                   conditionalPanel( condition = "input.select_fr_qb_9 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_5_YEARLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_9 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_5_ALL"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_9 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_5_WEEKLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_9 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_5_DAILY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_9 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_5_HOURLY"),type = "html", loader = "loader3"))),
-                                   fluidRow(
-                                     column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
-                                     column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
-                                   )
-                                 ))),
-                        fluidRow(
-                          column(width =10, offset = 2,
-                                 box(
-                                   title = "Electricity Statistics - VI", width = 10, status = "warning", solidHeader = TRUE,
-                                   collapsible = TRUE,
-                                   fluidRow(column(width = 2, selectInput("select_fr_qb_10", h4("Frequency"), 
-                                                                          choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
-                                            column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_qb_10 != 1",sliderInput("qb_dates_10",
-                                                                                                                                                  "Dates",
-                                                                                                                                                  min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
-                                                                                                                                                  max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
-                                                                                                                                                  value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
-                                                                                                                                                  timeFormat="%Y-%m-%d")))
-                                   ),
-                                   conditionalPanel( condition = "input.select_fr_qb_10 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_6_YEARLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_10 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_6_ALL"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_10 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_6_WEEKLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_10 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_6_DAILY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_10 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_6_HOURLY"),type = "html", loader = "loader3"))),
-                                   fluidRow(
-                                     column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
-                                     column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
-                                   )
-                                 ))),
-                        fluidRow(
-                          column(width =10, offset = 2,
-                                 box(
-                                   title = "Electricity Statistics - VII", width = 10, status = "warning", solidHeader = TRUE,
-                                   collapsible = TRUE,
-                                   fluidRow(column(width = 2, selectInput("select_fr_qb_11", h4("Frequency"), 
-                                                                          choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
-                                            column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_qb_11 != 1",sliderInput("qb_dates_11",
-                                                                                                                                                  "Dates",
-                                                                                                                                                  min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
-                                                                                                                                                  max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
-                                                                                                                                                  value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
-                                                                                                                                                  timeFormat="%Y-%m-%d")))
-                                   ),
-                                   conditionalPanel( condition = "input.select_fr_qb_11 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_7_YEARLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_11 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_7_ALL"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_11 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_7_WEEKLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_11 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_7_DAILY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_11 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_7_HOURLY"),type = "html", loader = "loader3"))),
-                                   fluidRow(
-                                     column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
-                                     column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
-                                   )
-                                 ))),
-                        fluidRow(
-                          column(width =10, offset = 2,
-                                 box(
-                                   title = "Electricity Statistics - VIII", width = 10, status = "warning", solidHeader = TRUE,
-                                   collapsible = TRUE,
-                                   fluidRow(column(width = 2, selectInput("select_fr_qb_12", h4("Frequency"), 
-                                                                          choices = list("Yearly" = 1,"Weekly" = 3, "Daily" = 4, "Hourly" = 5, "15 Min" = 6), selected = 6)),
-                                            column(width = 4, offset = 5.3, conditionalPanel(condition = "input.select_fr_qb_12 != 1",sliderInput("qb_dates_12",
-                                                                                                                                                  "Dates",
-                                                                                                                                                  min = as.Date(dashboard_ui_slider_date_start,"%Y-%m-%d"),
-                                                                                                                                                  max = as.Date(dashboard_ui_slider_date_end,"%Y-%m-%d"),
-                                                                                                                                                  value=c(as.Date(dashboard_ui_slider_date_start),as.Date(dashboard_ui_slider_date_end)),
-                                                                                                                                                  timeFormat="%Y-%m-%d")))
-                                   ),
-                                   conditionalPanel( condition = "input.select_fr_qb_12 == 1",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_8_YEARLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_12 == 6",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_8_ALL"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_12 == 3",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_8_WEEKLY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_12 == 4",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_8_DAILY"),type = "html", loader = "loader3"))),
-                                   conditionalPanel( condition = "input.select_fr_qb_12 == 5",
-                                                     fluidRow(withLoader(highchartOutput("QB_ENE_8_HOURLY"),type = "html", loader = "loader3"))),
-                                   fluidRow(
-                                     column(width = 10, helpText("Note: Selecting longer date range or frequency like daily, hourly can take longer time to render graphs.")),
-                                     column(width = 2, bsButton("button_pei_ind_1","Download Data", icon = icon("download"), style = "primary", block = TRUE))
-                                   )
-                                 ))),
+                                 )))
+                        
                         
               )),
       tabItem(tabName = "AB",
@@ -1530,8 +1403,43 @@ font-style: italic;
                         "Alberta",
                         "British Columbia"
                         ))),
-                      column(width = 2, selectInput("enf_flow",h3("Energy Flow"),choices = list("DEMAND"))),
-                      column(width = 5, dateRangeInput("download_dates",h3("Date range")))),
+                      column(width = 2,
+                             conditionalPanel(condition = "input.prvnc_list == 'Newfoundland & Labrador'",
+                                              selectInput("enf_flow_nfl",h3("Energy Flow"),choices = list("DEMAND"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Prince Edward Island'",
+                                              selectInput("enf_flow_pei",h3("Energy Flow"),choices = list("ON_ISL_LOAD"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Nova Scotia'",
+                                              selectInput("enf_flow_ns",h3("Energy Flow"),choices = list("LOAD"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'New Brunswick'",
+                                              selectInput("enf_flow_nb",h3("Energy Flow"),choices = list("LOAD"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Quebec'",
+                                              selectInput("enf_flow_qb",h3("Energy Flow"),choices = list("DEMAND"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Ontario'",
+                                              selectInput("enf_flow_on",h3("Energy Flow"),choices = list("ONTARIO_DEMAND"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Alberta'",
+                                              selectInput("enf_flow_ab",h3("Energy Flow"),choices = list("AESO"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'British Columbia'",
+                                              selectInput("enf_flow_bc",h3("Energy Flow"),choices = list("LOAD")))
+                             ),
+                      column(width = 5,
+                             conditionalPanel(condition = "input.prvnc_list == 'Newfoundland & Labrador'",
+                                              dateRangeInput("download_dates_nfl",h3("Date range"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Prince Edward Island'",
+                                              dateRangeInput("download_dates_pei",h3("Date range"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Nova Scotia'",
+                                              dateRangeInput("download_dates_ns",h3("Date range"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'New Brunswick'",
+                                              dateRangeInput("download_dates_nb",h3("Date range"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Quebec'",
+                                              dateRangeInput("download_dates_qb",h3("Date range"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Ontario'",
+                                              dateRangeInput("download_dates_on",h3("Date range"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'Alberta'",
+                                              dateRangeInput("download_dates_ab",h3("Date range"))),
+                             conditionalPanel(condition = "input.prvnc_list == 'British Columbia'",
+                                              dateRangeInput("download_dates_bc",h3("Date range"))),
+                             
+                             )),
                       hr(),
                       fluidRow(
                       column(width = 12,withLoader(DT::dataTableOutput("DOWNLOAD_TABLE"),type = "html", loader = "loader3"))),
@@ -1574,7 +1482,7 @@ dataset <- function(dataflow,ref_area,freq,energy_flow,startdate,enddate,nlastob
   sortdata$DATETIME_LOCAL <- str_replace(sortdata$DATETIME_LOCAL,"T"," ")
   sortdata$DATETIME_LOCAL <- as.POSIXlt(sortdata$DATETIME_LOCAL,format="%Y-%m-%d %H:%M:%S")
   api_pr_en_t <- Sys.time()
-  log_info('DataFlow:{dataflow} -- Variable:{energy_flow} -- {difftime(api_cl_en_t,api_cl_st_t)} sec for response time -- {difftime(api_pr_en_t,api_pr_st_t)} sec for process time -- rows: {nrow(sortdata)}')
+  log_info('DataFlow:{dataflow} -- DataReference:{ref_area} -- Variable:{energy_flow} -- {difftime(api_cl_en_t,api_cl_st_t)} sec for response time -- {difftime(api_pr_en_t,api_pr_st_t)} sec for process time -- rows: {nrow(sortdata)}')
   if(status_code(value(raw_data)) == 200){
     log_success('Status:{status_code(value(raw_data))}')
   }
@@ -1798,13 +1706,14 @@ server <- function(input, output, session) {
         }})
       nbload_subset <- reactive({nbload_data()})
       nb_load_ts <-  reactive({xts(nbload_subset()$OBS_VALUE,as.POSIXlt(nbload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
-      
+      colour_code <- reactive({input$color_choice})
       
       output$NB_load <- renderUI({
+        
         highchart(height = 400) %>% 
           hc_xAxis(type = "datetime",labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(nb_load_ts(), type = "line", name = "Load: ", color = "maroon") %>%
+          hc_add_series(nb_load_ts(), type = "line", name = "Load: ", color = colour_code()) %>%
           hc_plotOptions(series = list(turboThreshold = 1)) %>% 
           hc_navigator(enabled = TRUE)})
       
@@ -1876,13 +1785,14 @@ server <- function(input, output, session) {
         }})
       nsload_subset <- reactive({nsload_data()})
       ns_load_ts <-  reactive({xts(nsload_subset()$OBS_VALUE,as.POSIXlt(nsload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      colour_code <- reactive({input$color_choice})
       
       
       output$NS_load <- renderUI({
         highchart(height = 400) %>% 
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>% 
-          hc_add_series(ns_load_ts(), type = "line", name = "Load: ", color = "maroon") %>% 
+          hc_add_series(ns_load_ts(), type = "line", name = "Load: ", color = colour_code()) %>% 
           hc_plotOptions(series = list(turboThreshold = 1)) %>%
           hc_navigator(enabled = TRUE)})
       
@@ -1954,13 +1864,14 @@ server <- function(input, output, session) {
     }})
   bcload_subset <- reactive({bcload_data()})
   bc_load_ts <-  reactive({xts(bcload_subset()$OBS_VALUE,as.POSIXlt(bcload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+  colour_code <- reactive({input$color_choice})
   
   
   output$BC_load <- renderUI({
     highchart(height = 400) %>% 
       hc_xAxis(type = "datetime") %>%
       hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-      hc_add_series(bc_load_ts(), type = "line", name = "Load: ", color = "maroon") %>% 
+      hc_add_series(bc_load_ts(), type = "line", name = "Load: ", color = colour_code()) %>% 
       hc_plotOptions(series = list(turboThreshold = 1)) %>%
       hc_navigator(enabled = TRUE)})
   
@@ -1984,8 +1895,6 @@ server <- function(input, output, session) {
   log_info('{difftime(en_tm_dsh_bc,st_tm_dsh_bc)} sec for BC dashboard')
   })
   #BC-front-end
-  
-  #output$AB_load <- renderHighchart({ab_load_chart})
   
   # start front Ontario 
   st_tm_dsh_on <- Sys.time()
@@ -2034,13 +1943,14 @@ server <- function(input, output, session) {
         }})
       onload_subset <- reactive({onload_data()})
       on_load_ts <-  reactive({xts(onload_subset()$OBS_VALUE,as.POSIXlt(onload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      colour_code <- reactive({input$color_choice})
       
       
       output$ON_load <- renderUI({
         highchart(height = 400) %>% 
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(on_load_ts(), type = "line", name = "Load: ", color = "maroon") %>% 
+          hc_add_series(on_load_ts(), type = "line", name = "Load: ", color = colour_code()) %>% 
           hc_plotOptions(series = list(turboThreshold = 1)) %>%
           hc_navigator(enabled = TRUE)})
       
@@ -2112,13 +2022,14 @@ server <- function(input, output, session) {
         }})
       peiload_subset <- reactive({peiload_data()})
       pei_load_ts <-  reactive({xts(peiload_subset()$OBS_VALUE,as.POSIXlt(peiload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      colour_code <- reactive({input$color_choice})
       
       
       output$PEI_load <- renderUI({
         highchart(height = 400) %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_load_ts(), type = "line", name = "Load: ", color = "maroon") %>% 
+          hc_add_series(pei_load_ts(), type = "line", name = "Load: ", color = colour_code()) %>% 
           hc_plotOptions(series = list(turboThreshold = 1)) %>%
           hc_navigator(enabled = TRUE)})
       
@@ -2191,13 +2102,14 @@ server <- function(input, output, session) {
         }})
       nflload_subset <- reactive({nflload_data()})
       nfl_load_ts <-  reactive({xts(nflload_subset()$OBS_VALUE,as.POSIXlt(nflload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      colour_code <- reactive({input$color_choice})
       
       
       output$NFL_load <- renderUI({
         highchart(height = 400) %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(nfl_load_ts(), type = "line", name = "Load: ", color = "maroon") %>% 
+          hc_add_series(nfl_load_ts(), type = "line", name = "Load: ", color = colour_code()) %>% 
           hc_plotOptions(series = list(turboThreshold = 1)) %>%
           hc_navigator(enabled = TRUE)})
       
@@ -2221,6 +2133,88 @@ server <- function(input, output, session) {
     log_info('{difftime(en_tm_dsh_nfl,st_tm_dsh_nfl)} sec for NFL dashboard')
   })
 #end front NFL
+  
+#start Alberta
+  st_tm_dsh_ab <- Sys.time()
+  check_ab_stat_api <- function(){status_api("DF_HFED_AB","CA_AB_CA","H","AESO",NULL,NULL,1)}
+  get_ab_stat_api <- function(){status_api("DF_HFED_AB","CA_AB_CA","H","AESO",NULL,NULL,1)}
+  ab_stat_api <- reactivePoll(intervalMillis = 1800000, session = session,
+                              checkFunc = check_ab_stat_api, valueFunc = get_ab_stat_api)
+  ab_status <- reactive({ab_stat_api()})
+  observeEvent(ab_stat_api(),{
+    if(ab_status() != 200)
+    {
+      ab_api_stat <<- reactive({HTML(paste("<i style='color:green; font-style:italic;'> Okay:",ab_status(),"</i>"))})
+      test_ab_dat <<- dataset("DF_HFED_AB","CA_AB_CA","H","AESO",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+      log_info("Current AB Date: {test_ab_dat$DATETIME_LOCAL}")
+      if((as.Date(test_ab_dat$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_ab_dat$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+      {
+        check_db_ab <- function(){dataset("DF_HFED_AB","CA_AB_CA","H","AESO",sdmx_date_start,sdmx_date_end,NULL) %>% count(DATETIME_LOCAL)}
+        get_db_ab <- function(){dataset("DF_HFED_AB","CA_AB_CA","H","AESO",sdmx_date_start,sdmx_date_end,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()}
+        log_success("Using Latest Data for AB")
+        ab_src_stat <<- reactive({HTML("<i style='color:green; font-style:italic;'> Okay</i>")})
+      }
+      else
+      {
+        check_db_ab <- function(){dataset("DF_HFED_AB","CA_AB_CA","H","AESO",NULL,NULL,10) %>% count(DATETIME_LOCAL)}
+        get_db_ab <- function(){dataset("DF_HFED_AB","CA_AB_CA","H","AESO",NULL,NULL,10) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()}
+        log_error("Using Nrow Data for AB")
+        ab_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      }
+      abload_data_pre <- reactivePoll(intervalMillis = 1800000, session = session,
+                                      checkFunc = check_db_ab, valueFunc = get_db_ab)
+      abload_data <- reactive({abload_data_pre()})
+      #abload_data <- reactive({subset(abload_da(),subset = (abload_da()$REF_AREA == "CA_AB_CA"))})
+      abload_data_mean_cr <- reactive({head(abload_data()$OBS_VALUE,1)})
+      abload_data_mean_pst <- reactive({abload_data()$OBS_VALUE[2]})
+      abload_data_mean_diff <- reactive({(abload_data_mean_cr()-abload_data_mean_pst())/abload_data_mean_pst()})
+      abload_data_mean_prcnt <- reactive({abload_data_mean_diff()*100})
+      observeEvent(abload_data_pre(),{
+
+        if(abload_data_mean_prcnt() < 0){
+          removeClass("abmean","green_output")
+          addClass("abmean","red_output")
+          output$AB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-down'>",abs(round(abload_data_mean_prcnt(),digits = 2)),"% in last hour</i></h4>"))})
+        }
+        else if(abload_data_mean_prcnt() > 0){
+          removeClass("abmean","red_output")
+          addClass("abmean","green_output")
+          output$AB_MEAN <- renderUI({HTML(paste("<h4><i class='fa fa-arrow-up'>",abs(round(abload_data_mean_prcnt(),digits = 2)),"% in last hour</i></h4>"))})
+        }})
+      abload_sub <- reactive({abload_data()})
+      abload_subset <- reactive({subset(abload_sub(),subset = (abload_sub()$REF_AREA == "CA_AB_CA"))})
+      ab_load_ts <-  reactive({xts(abload_subset()$OBS_VALUE,as.POSIXlt(abload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      colour_code <- reactive({input$color_choice})
+
+
+      output$AB_load <- renderUI({
+        highchart(height = 400) %>%
+          hc_xAxis(type = "datetime") %>%
+          hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
+          hc_add_series(ab_load_ts(), type = "line", name = "Load: ", color = colour_code()) %>%
+          hc_plotOptions(series = list(turboThreshold = 1)) %>%
+          hc_navigator(enabled = TRUE)})
+
+
+      log_success("Dashboard started, Status:{ab_status()}")
+
+    }
+    else if((ab_status() == 200) || (is.na(ab_status())))
+    {
+      output$AB_load <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ab_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",ab_status(),"Error</i>
+                                     </div>
+                                           "))})
+      ab_src_stat <<- reactive({HTML("<i style='color:red; font-style:italic;'> Error</i>")})
+      ab_api_stat <<- reactive({HTML(paste("<i style='color:red; font-style:italic;'> Error:",ab_status(),"</i>"))})
+      log_error("Error Dashboard started, Status:{ab_status()}")
+    }
+
+    en_tm_dsh_ab <- Sys.time()
+    log_info('{difftime(en_tm_dsh_ab,st_tm_dsh_ab)} sec for AB dashboard')
+  })
+#end alberta
   
 #start front Quebec  
   st_tm_dsh_qb <- Sys.time()
@@ -2270,13 +2264,14 @@ server <- function(input, output, session) {
         }})
       qbload_subset <- reactive({qbload_data()})
       qb_load_ts <-  reactive({xts(qbload_subset()$OBS_VALUE,as.POSIXlt(qbload_subset()$DATETIME_LOCAL,format = "%Y-%m-%d %H:%M:%S"))})
+      colour_code <- reactive({input$color_choice})
       
       
       output$QB_load <- renderUI({
         highchart(height = 400) %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(qb_load_ts(), type = "line", name = "Load: ", color = "maroon") %>% 
+          hc_add_series(qb_load_ts(), type = "line", name = "Load: ", color = colour_code()) %>% 
           hc_plotOptions(series = list(turboThreshold = 1)) %>%
           hc_navigator(enabled = TRUE)})
       
@@ -2399,56 +2394,45 @@ else if(input$rted_menu == "pei")
         return(pei_hr)
       })
       
+      colour_code_pei_1 <- reactive({input$color_choice_pei_1})
+      colour_code_pei_2 <- reactive({input$color_choice_pei_2})
+      colour_code_pei_3 <- reactive({input$color_choice_pei_3})
+      colour_code_pei_4 <- reactive({input$color_choice_pei_4})
+      
       output$PEI_ON_LOAD_YEARLY <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_dat_ts_yearly()[,(colnames(pei_ind_dat_ts_yearly()) %in% c('pei_ind_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_ind_dat_ts_yearly()[,(colnames(pei_ind_dat_ts_yearly()) %in% c('pei_ind_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
-          hc_navigator(enabled = TRUE) %>%
-          hc_exporting(enabled = TRUE, filename = "PEI_load_yearly",buttons = list(contextButton = list(menuItems = 
-                                                                                                         c("viewFullscreen", "printChart", "separator", "downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG"))))
-        })
+          hc_add_series(pei_ind_dat_ts_yearly()[,(colnames(pei_ind_dat_ts_yearly()) %in% c('pei_ind_dat_ts().High'))], type = "line", name = "High Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_ind_dat_ts_yearly()[,(colnames(pei_ind_dat_ts_yearly()) %in% c('pei_ind_dat_ts().Low'))], type = "line", name = "Low Load", color = colour_code_pei_2()) %>%
+          hc_navigator(enabled = TRUE) })
       output$PEI_ON_LOAD_WEEKLY <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_dat_ts_weekly()[,(colnames(pei_ind_dat_ts_weekly()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_ind_dat_ts_weekly()[,(colnames(pei_ind_dat_ts_weekly()) %in% c('pei_ind_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
-          hc_navigator(enabled = TRUE) %>%
-          hc_exporting(enabled = TRUE, filename = "PEI_load_yearly",buttons = list(contextButton = list(menuItems = 
-                                                                                                          c("viewFullscreen", "printChart", "separator", "downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG"))))
-      })
+          hc_add_series(pei_ind_dat_ts_weekly()[,(colnames(pei_ind_dat_ts_weekly()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_ind_dat_ts_weekly()[,(colnames(pei_ind_dat_ts_weekly()) %in% c('pei_ind_subset_ts().Low'))], type = "line", name = "Low Load", color = colour_code_pei_2()) %>%
+          hc_navigator(enabled = TRUE) })
       output$PEI_ON_LOAD_DAILY <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_dat_ts_daily()[,(colnames(pei_ind_dat_ts_daily()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_ind_dat_ts_daily()[,(colnames(pei_ind_dat_ts_daily()) %in% c('pei_ind_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
-          hc_navigator(enabled = TRUE) %>%
-          hc_exporting(enabled = TRUE, filename = "PEI_load_yearly",buttons = list(contextButton = list(menuItems = 
-                                                                                                          c("viewFullscreen", "printChart", "separator", "downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG"))))
-      })
+          hc_add_series(pei_ind_dat_ts_daily()[,(colnames(pei_ind_dat_ts_daily()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_ind_dat_ts_daily()[,(colnames(pei_ind_dat_ts_daily()) %in% c('pei_ind_subset_ts().Low'))], type = "line", name = "Low Load", color = colour_code_pei_2()) %>%
+          hc_navigator(enabled = TRUE) })
       output$PEI_ON_LOAD_HOURLY <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_dat_ts_hourly()[,(colnames(pei_ind_dat_ts_hourly()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_ind_dat_ts_hourly()[,(colnames(pei_ind_dat_ts_hourly()) %in% c('pei_ind_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
-          hc_navigator(enabled = TRUE) %>%
-          hc_exporting(enabled = TRUE, filename = "PEI_load_yearly",buttons = list(contextButton = list(menuItems = 
-                                                                                                          c("viewFullscreen", "printChart", "separator", "downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG"))))
-      })
+          hc_add_series(pei_ind_dat_ts_hourly()[,(colnames(pei_ind_dat_ts_hourly()) %in% c('pei_ind_subset_ts().High'))], type = "line", name = "High Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_ind_dat_ts_hourly()[,(colnames(pei_ind_dat_ts_hourly()) %in% c('pei_ind_subset_ts().Low'))], type = "line", name = "Low Load", color = colour_code_pei_2()) %>%
+          hc_navigator(enabled = TRUE)})
       output$PEI_ON_LOAD_ALL <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_subset_ts(), type = "line", name = "Load: ") %>%
-          hc_navigator(enabled = TRUE) %>%
-          hc_exporting(enabled = TRUE, filename = "PEI_load_yearly",buttons = list(contextButton = list(menuItems = 
-                                                                                                          c("viewFullscreen", "printChart", "separator", "downloadPNG", "downloadJPEG", "downloadPDF", "downloadSVG"))))
-        
-      })
+          hc_add_series(pei_ind_subset_ts(), type = "line", name = "Load",color = colour_code_pei_1()) %>%
+          hc_navigator(enabled = TRUE) })
       en_tm_dsh_pei_1 <- Sys.time()
       log_info('{difftime(en_tm_dsh_pei_1,st_tm_dsh_pei_1)} sec for PEI Main 1 dashboard')
       
@@ -2476,45 +2460,45 @@ else if(input$rted_menu == "pei")
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_dat_ts_yearly_2()[,(colnames(pei_ind_dat_ts_yearly_2()) %in% c('pei_ind_dat_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_ind_dat_ts_yearly_2()[,(colnames(pei_ind_dat_ts_yearly_2()) %in% c('pei_ind_dat_ts_2().Low'))], type = "line", name = "Low Wind Load: ", color = "red") %>%
-          hc_add_series(pei_ind_dat_ts_yearly_2_fossil()[,(colnames(pei_ind_dat_ts_yearly_2_fossil()) %in% c('pei_ind_dat_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "maroon") %>%
-          hc_add_series(pei_ind_dat_ts_yearly_2_fossil()[,(colnames(pei_ind_dat_ts_yearly_2_fossil()) %in% c('pei_ind_dat_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load: ", color = "blue") %>%
+          hc_add_series(pei_ind_dat_ts_yearly_2()[,(colnames(pei_ind_dat_ts_yearly_2()) %in% c('pei_ind_dat_ts_2().High'))], type = "line", name = "High Wind Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_ind_dat_ts_yearly_2()[,(colnames(pei_ind_dat_ts_yearly_2()) %in% c('pei_ind_dat_ts_2().Low'))], type = "line", name = "Low Wind Load", color = colour_code_pei_2()) %>%
+          hc_add_series(pei_ind_dat_ts_yearly_2_fossil()[,(colnames(pei_ind_dat_ts_yearly_2_fossil()) %in% c('pei_ind_dat_ts_2_fossil().High'))], type = "line", name = "High Fossil Load", color = colour_code_pei_3()) %>%
+          hc_add_series(pei_ind_dat_ts_yearly_2_fossil()[,(colnames(pei_ind_dat_ts_yearly_2_fossil()) %in% c('pei_ind_dat_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load", color = colour_code_pei_4()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_ON_WIND_WEEKLY <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_dat_ts_weekly_2()[,(colnames(pei_ind_dat_ts_weekly_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_ind_dat_ts_weekly_2()[,(colnames(pei_ind_dat_ts_weekly_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "line", name = "Low Wind Load: ", color = "red") %>%
-          hc_add_series(pei_ind_dat_ts_weekly_2_fossil()[,(colnames(pei_ind_dat_ts_weekly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "maroon") %>%
-          hc_add_series(pei_ind_dat_ts_weekly_2_fossil()[,(colnames(pei_ind_dat_ts_weekly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load: ", color = "blue") %>%
+          hc_add_series(pei_ind_dat_ts_weekly_2()[,(colnames(pei_ind_dat_ts_weekly_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_ind_dat_ts_weekly_2()[,(colnames(pei_ind_dat_ts_weekly_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "line", name = "Low Wind Load", color = colour_code_pei_2()) %>%
+          hc_add_series(pei_ind_dat_ts_weekly_2_fossil()[,(colnames(pei_ind_dat_ts_weekly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load", color = colour_code_pei_3()) %>%
+          hc_add_series(pei_ind_dat_ts_weekly_2_fossil()[,(colnames(pei_ind_dat_ts_weekly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load", color = colour_code_pei_4()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_ON_WIND_DAILY <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_dat_ts_daily_2()[,(colnames(pei_ind_dat_ts_daily_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_ind_dat_ts_daily_2()[,(colnames(pei_ind_dat_ts_daily_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "line", name = "Low Wind Load: ", color = "red") %>%
-          hc_add_series(pei_ind_dat_ts_daily_2_fossil()[,(colnames(pei_ind_dat_ts_daily_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "maroon") %>%
-          hc_add_series(pei_ind_dat_ts_daily_2_fossil()[,(colnames(pei_ind_dat_ts_daily_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load: ", color = "blue") %>%
+          hc_add_series(pei_ind_dat_ts_daily_2()[,(colnames(pei_ind_dat_ts_daily_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_ind_dat_ts_daily_2()[,(colnames(pei_ind_dat_ts_daily_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "line", name = "Low Wind Load", color = colour_code_pei_2()) %>%
+          hc_add_series(pei_ind_dat_ts_daily_2_fossil()[,(colnames(pei_ind_dat_ts_daily_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load", color = colour_code_pei_3()) %>%
+          hc_add_series(pei_ind_dat_ts_daily_2_fossil()[,(colnames(pei_ind_dat_ts_daily_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load", color = colour_code_pei_4()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_ON_WIND_HOURLY <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>%
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_ind_dat_ts_hourly_2()[,(colnames(pei_ind_dat_ts_hourly_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_ind_dat_ts_hourly_2()[,(colnames(pei_ind_dat_ts_hourly_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "line", name = "Low Wind Load: ", color = "red") %>%
-          hc_add_series(pei_ind_dat_ts_hourly_2_fossil()[,(colnames(pei_ind_dat_ts_hourly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load: ", color = "maroon") %>%
-          hc_add_series(pei_ind_dat_ts_hourly_2_fossil()[,(colnames(pei_ind_dat_ts_hourly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load: ", color = "blue") %>%
+          hc_add_series(pei_ind_dat_ts_hourly_2()[,(colnames(pei_ind_dat_ts_hourly_2()) %in% c('pei_ind_subset_ts_2().High'))], type = "line", name = "High Wind Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_ind_dat_ts_hourly_2()[,(colnames(pei_ind_dat_ts_hourly_2()) %in% c('pei_ind_subset_ts_2().Low'))], type = "line", name = "Low Wind Load", color = colour_code_pei_2()) %>%
+          hc_add_series(pei_ind_dat_ts_hourly_2_fossil()[,(colnames(pei_ind_dat_ts_hourly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().High'))], type = "line", name = "High Fossil Load", color = colour_code_pei_3()) %>%
+          hc_add_series(pei_ind_dat_ts_hourly_2_fossil()[,(colnames(pei_ind_dat_ts_hourly_2_fossil()) %in% c('pei_ind_subset_ts_2_fossil().Low'))], type = "line", name = "Low Fossil Load", color = colour_code_pei_4()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_ON_WIND_ALL <- renderUI({
         highchart() %>%
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
           hc_navigator(enabled = TRUE) %>%
-          hc_add_series(pei_ind_subset_ts_2(), type = "line", name = "Wind Load: ", color = "lightgreen")%>%
-          hc_add_series(pei_ind_subset_ts_2_fossil(), type = "line", name = "Fossil Load: ", color = "maroon")
+          hc_add_series(pei_ind_subset_ts_2(), type = "line", name = "Wind Load", color = colour_code_pei_1())%>%
+          hc_add_series(pei_ind_subset_ts_2_fossil(), type = "line", name = "Fossil Load", color = colour_code_pei_2())
       })
       en_tm_dsh_pei_2 <- Sys.time()
       log_info('{difftime(en_tm_dsh_pei_2,st_tm_dsh_pei_2)} sec for PEI Main 2 dashboard')
@@ -2542,45 +2526,45 @@ else if(input$rted_menu == "pei")
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_exp_dat_ts_yearly()[,(colnames(pei_exp_dat_ts_yearly()) %in% c('pei_exp_dat_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_exp_dat_ts_yearly()[,(colnames(pei_exp_dat_ts_yearly()) %in% c('pei_exp_dat_ts().Low'))], type = "line", name = "Low Export Load: ", color = "red") %>%
-          hc_add_series(pei_exp_local_dat_ts_yearly()[,(colnames(pei_exp_local_dat_ts_yearly()) %in% c('pei_exp_local_dat_ts().High'))], type = "line", name = "High Local Load: ", color = "maroon") %>%
-          hc_add_series(pei_exp_local_dat_ts_yearly()[,(colnames(pei_exp_local_dat_ts_yearly()) %in% c('pei_exp_local_dat_ts().Low'))], type = "line", name = "Low Local Load: ", color = "blue") %>%
+          hc_add_series(pei_exp_dat_ts_yearly()[,(colnames(pei_exp_dat_ts_yearly()) %in% c('pei_exp_dat_ts().High'))], type = "line", name = "High Export Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_exp_dat_ts_yearly()[,(colnames(pei_exp_dat_ts_yearly()) %in% c('pei_exp_dat_ts().Low'))], type = "line", name = "Low Export Load", color = colour_code_pei_2()) %>%
+          hc_add_series(pei_exp_local_dat_ts_yearly()[,(colnames(pei_exp_local_dat_ts_yearly()) %in% c('pei_exp_local_dat_ts().High'))], type = "line", name = "High Local Load", color = colour_code_pei_3()) %>%
+          hc_add_series(pei_exp_local_dat_ts_yearly()[,(colnames(pei_exp_local_dat_ts_yearly()) %in% c('pei_exp_local_dat_ts().Low'))], type = "line", name = "Low Local Load", color = colour_code_pei_4()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_EXPORT_WEEKLY <- renderUI({
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_exp_dat_ts_weekly()[,(colnames(pei_exp_dat_ts_weekly()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_exp_dat_ts_weekly()[,(colnames(pei_exp_dat_ts_weekly()) %in% c('pei_exp_subset_ts().Low'))], type = "line", name = "Low Export Load: ", color = "red") %>%
-          hc_add_series(pei_exp_local_dat_ts_weekly()[,(colnames(pei_exp_local_dat_ts_weekly()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "maroon") %>%
-          hc_add_series(pei_exp_local_dat_ts_weekly()[,(colnames(pei_exp_local_dat_ts_weekly()) %in% c('pei_exp_local_subset_ts().Low'))], type = "line", name = "Low Local Load: ", color = "blue") %>%
+          hc_add_series(pei_exp_dat_ts_weekly()[,(colnames(pei_exp_dat_ts_weekly()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_exp_dat_ts_weekly()[,(colnames(pei_exp_dat_ts_weekly()) %in% c('pei_exp_subset_ts().Low'))], type = "line", name = "Low Export Load", color = colour_code_pei_2()) %>%
+          hc_add_series(pei_exp_local_dat_ts_weekly()[,(colnames(pei_exp_local_dat_ts_weekly()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load", color = colour_code_pei_3()) %>%
+          hc_add_series(pei_exp_local_dat_ts_weekly()[,(colnames(pei_exp_local_dat_ts_weekly()) %in% c('pei_exp_local_subset_ts().Low'))], type = "line", name = "Low Local Load", color = colour_code_pei_4()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_EXPORT_DAILY <- renderUI({
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_exp_dat_ts_daily()[,(colnames(pei_exp_dat_ts_daily()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_exp_dat_ts_daily()[,(colnames(pei_exp_dat_ts_daily()) %in% c('pei_exp_subset_ts().Low'))], type = "line", name = "Low Export Load: ", color = "red") %>%
-          hc_add_series(pei_exp_local_dat_ts_daily()[,(colnames(pei_exp_local_dat_ts_daily()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "maroon") %>%
-          hc_add_series(pei_exp_local_dat_ts_daily()[,(colnames(pei_exp_local_dat_ts_daily()) %in% c('pei_exp_local_subset_ts().Low'))], type = "line", name = "Low Local Load: ", color = "blue") %>%
+          hc_add_series(pei_exp_dat_ts_daily()[,(colnames(pei_exp_dat_ts_daily()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_exp_dat_ts_daily()[,(colnames(pei_exp_dat_ts_daily()) %in% c('pei_exp_subset_ts().Low'))], type = "line", name = "Low Export Load", color = colour_code_pei_2()) %>%
+          hc_add_series(pei_exp_local_dat_ts_daily()[,(colnames(pei_exp_local_dat_ts_daily()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load", color = colour_code_pei_3()) %>%
+          hc_add_series(pei_exp_local_dat_ts_daily()[,(colnames(pei_exp_local_dat_ts_daily()) %in% c('pei_exp_local_subset_ts().Low'))], type = "line", name = "Low Local Load", color = colour_code_pei_4()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_EXPORT_HOURLY <- renderUI({
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_exp_dat_ts_hourly()[,(colnames(pei_exp_dat_ts_hourly()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_exp_dat_ts_hourly()[,(colnames(pei_exp_dat_ts_hourly()) %in% c('pei_exp_subset_ts().Low'))], type = "line", name = "Low Export Load: ", color = "red") %>%
-          hc_add_series(pei_exp_local_dat_ts_hourly()[,(colnames(pei_exp_local_dat_ts_hourly()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "maroon") %>%
-          hc_add_series(pei_exp_local_dat_ts_hourly()[,(colnames(pei_exp_local_dat_ts_hourly()) %in% c('pei_exp_local_subset_ts().Low'))], type = "line", name = "Low Local Load: ", color = "blue") %>%
+          hc_add_series(pei_exp_dat_ts_hourly()[,(colnames(pei_exp_dat_ts_hourly()) %in% c('pei_exp_subset_ts().High'))], type = "line", name = "High Export Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_exp_dat_ts_hourly()[,(colnames(pei_exp_dat_ts_hourly()) %in% c('pei_exp_subset_ts().Low'))], type = "line", name = "Low Export Load", color = colour_code_pei_2()) %>%
+          hc_add_series(pei_exp_local_dat_ts_hourly()[,(colnames(pei_exp_local_dat_ts_hourly()) %in% c('pei_exp_local_subset_ts().High'))], type = "line", name = "High Local Load", color = colour_code_pei_3()) %>%
+          hc_add_series(pei_exp_local_dat_ts_hourly()[,(colnames(pei_exp_local_dat_ts_hourly()) %in% c('pei_exp_local_subset_ts().Low'))], type = "line", name = "Low Local Load", color = colour_code_pei_4()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_EXPORT_ALL <- renderUI({
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
           hc_navigator(enabled = TRUE) %>% 
-          hc_add_series(pei_exp_subset_ts(), type = "line", name = "Export Load: ", color = "maroon") %>%
-          hc_add_series(pei_exp_local_subset_ts(), type = "line", name = "Local Load: ", color = "lightgreen")
+          hc_add_series(pei_exp_subset_ts(), type = "line", name = "Export Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_exp_local_subset_ts(), type = "line", name = "Local Load", color = colour_code_pei_2())
       })
       
       pei_date_ind_4_1 <- reactive({paste(input$pei_dates_4[1],"00:00:00",sep = " ")})
@@ -2599,36 +2583,36 @@ else if(input$rted_menu == "pei")
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_loc_dat_ts_yearly()[,(colnames(pei_loc_dat_ts_yearly()) %in% c('pei_loc_dat_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_loc_dat_ts_yearly()[,(colnames(pei_loc_dat_ts_yearly()) %in% c('pei_loc_dat_ts().Low'))], type = "line", name = "Low Local Load: ", color = "red") %>%
+          hc_add_series(pei_loc_dat_ts_yearly()[,(colnames(pei_loc_dat_ts_yearly()) %in% c('pei_loc_dat_ts().High'))], type = "line", name = "High Local Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_loc_dat_ts_yearly()[,(colnames(pei_loc_dat_ts_yearly()) %in% c('pei_loc_dat_ts().Low'))], type = "line", name = "Low Local Load", color = colour_code_pei_2()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_LOCAL_WEEKLY <- renderUI({
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_loc_dat_ts_weekly()[,(colnames(pei_loc_dat_ts_weekly()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_loc_dat_ts_weekly()[,(colnames(pei_loc_dat_ts_weekly()) %in% c('pei_loc_subset_ts().Low'))], type = "line", name = "Low Local Load: ", color = "red") %>%
+          hc_add_series(pei_loc_dat_ts_weekly()[,(colnames(pei_loc_dat_ts_weekly()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_loc_dat_ts_weekly()[,(colnames(pei_loc_dat_ts_weekly()) %in% c('pei_loc_subset_ts().Low'))], type = "line", name = "Low Local Load", color = colour_code_pei_2()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_LOCAL_DAILY <- renderUI({
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_loc_dat_ts_daily()[,(colnames(pei_loc_dat_ts_daily()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_loc_dat_ts_daily()[,(colnames(pei_loc_dat_ts_daily()) %in% c('pei_loc_subset_ts().Low'))], type = "line", name = "Low Local Load: ", color = "red") %>%
+          hc_add_series(pei_loc_dat_ts_daily()[,(colnames(pei_loc_dat_ts_daily()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_loc_dat_ts_daily()[,(colnames(pei_loc_dat_ts_daily()) %in% c('pei_loc_subset_ts().Low'))], type = "line", name = "Low Local Load", color = colour_code_pei_2()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_LOCAL_HOURLY <- renderUI({
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
-          hc_add_series(pei_loc_dat_ts_hourly()[,(colnames(pei_loc_dat_ts_hourly()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load: ", color = "lightgreen") %>%
-          hc_add_series(pei_loc_dat_ts_hourly()[,(colnames(pei_loc_dat_ts_hourly()) %in% c('pei_loc_subset_ts().Low'))], type = "line", name = "Low Local Load: ", color = "red") %>%
+          hc_add_series(pei_loc_dat_ts_hourly()[,(colnames(pei_loc_dat_ts_hourly()) %in% c('pei_loc_subset_ts().High'))], type = "line", name = "High Local Load", color = colour_code_pei_1()) %>%
+          hc_add_series(pei_loc_dat_ts_hourly()[,(colnames(pei_loc_dat_ts_hourly()) %in% c('pei_loc_subset_ts().Low'))], type = "line", name = "Low Local Load", color = colour_code_pei_2()) %>%
           hc_navigator(enabled = TRUE)})
       output$PEI_LOCAL_ALL <- renderUI({
         highchart() %>% 
           hc_xAxis(type = "datetime") %>% 
           hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
           hc_navigator(enabled = TRUE) %>% 
-          hc_add_series(pei_loc_subset_ts(), type = "line", name = "Local Load: ", color = "brown")
+          hc_add_series(pei_loc_subset_ts(), type = "line", name = "Local Load", color = colour_code_pei_1())
       })
     }  
     else if(pei_status() != 200)
@@ -3220,9 +3204,30 @@ else if(input$rted_menu == "pei")
         else if(nfl_status() != 200)
         {
           #GPH 1
+          #GPH 1
           output$NFL_LOAD_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
                                      <br>
-                                     <i id='nb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",nb_status_ind(),"Error</i>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",nfl_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$NFL_LOAD_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",nfl_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$NFL_LOAD_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",nfl_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$NFL_LOAD_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",nfl_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$NFL_LOAD_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",nfl_status_ind(),"Error</i>
                                      </div>
                                           "))})
         }
@@ -3320,7 +3325,27 @@ else if(input$rted_menu == "pei")
         #GPH 1
         output$BC_LOAD_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
                                      <br>
-                                     <i id='nb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",bc_status_ind(),"Error</i>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",bc_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+        output$BC_LOAD_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",bc_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+        output$BC_LOAD_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",bc_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+        output$BC_LOAD_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",bc_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+        output$BC_LOAD_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='ns_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",bc_status_ind(),"Error</i>
                                      </div>
                                           "))})
       }
@@ -3555,7 +3580,7 @@ else if(input$rted_menu == "pei")
         ns_30_dat_ts_hourly <- reactive({to.hourly(ns_30_subset_ts())})
         
         output$NS_NSI_YEARLY <- renderUI({
-          highchart() %>% 
+         highchart() %>% 
             hc_xAxis(type = "datetime") %>% 
             hc_yAxis(title = list(text = "MW"),labels = list(style = list(color = "black", 'font-style' = "bold", 'font-size' = "small"))) %>%
             hc_add_series(ns_30_dat_ts_yearly()[,(colnames(ns_30_dat_ts_yearly()) %in% c('ns_30_dat_ts().High'))], type = "line", name = "High Load: ", color = "green") %>%
@@ -3867,29 +3892,704 @@ else if(input$rted_menu == "pei")
          }
        })}
     
+    else if(input$rted_menu == "QB")
+    {
+      #PRINCE EDWARD ISLAND START
+      st_tm_dsh_qb <- Sys.time()
+      test_qb_dat_ind <<- dataset("DF_HFED_QC","CA_QC","H","DEMAND",NULL,NULL,1) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+      check_qb_stat_api_ind <- function(){status_api("DF_HFED_QC","CA_QC","H","DEMAND",NULL,NULL,1)}
+      get_qb_stat_api_ind <- function(){status_api("DF_HFED_QC","CA_QC","H","DEMAND",NULL,NULL,1)}
+      qb_stat_api_ind <- reactivePoll(intervalMillis = 1800000, session = session,
+                                      checkFunc = check_qb_stat_api_ind, valueFunc = get_qb_stat_api_ind)
+      qb_status_ind <- reactive({qb_stat_api_ind()})
+      observeEvent(qb_stat_api_ind(),{
+        if(qb_status_ind() == 200){
+          if((as.Date(test_qb_dat_ind$DATETIME_LOCAL) == as.Date(Sys.time()))||(as.Date(test_qb_dat_ind$DATETIME_LOCAL) == as.Date(Sys.time())-1))
+          {
+            qb_ind_dat_demand <<- dataset("DF_HFED_QC","CA_QC","H","DEMAND",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_hydro <<- dataset("DF_HFED_QC","CA_QC","H","HYDRO",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_other <<- dataset("DF_HFED_QC","CA_QC","H","OTHER",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_solar <<- dataset("DF_HFED_QC","CA_QC","H","SOLAR",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_thermal <<- dataset("DF_HFED_QC","CA_QC","H","THERMAL",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_totprod <<- dataset("DF_HFED_QC","CA_QC","H","TOTAL_PRODUCTION",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_wind <<- dataset("DF_HFED_QC","CA_QC","H","WIND",sdmx_date_start_ind_p,sdmx_date_end_ind_p,NULL) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            #updating the dates after the data loads (QB)
+            #updating the dates after the data loads (QB)
+            qb_dd_1 <- as.Date(head(qb_ind_dat_demand$DATETIME_LOCAL,1))-(7)
+            qb_dd_1_1 <- paste(qb_dd_1,"00:00:00",sep=" ")
+            qb_dd_1_2 <- as.Date(head(qb_ind_dat_demand$DATETIME_LOCAL,1))
+            qb_dd_2 <- as.Date(head(qb_ind_dat_hydro$DATETIME_LOCAL,1))-(7)
+            qb_dd_2_1 <- paste(qb_dd_2,"00:00:00",sep=" ")
+            qb_dd_2_2 <- as.Date(head(qb_ind_dat_hydro$DATETIME_LOCAL,1))
+            qb_dd_3 <- as.Date(head(qb_ind_dat_other$DATETIME_LOCAL,1))-(7)
+            qb_dd_3_1 <- paste(qb_dd_3,"00:00:00",sep=" ")
+            qb_dd_3_2 <- as.Date(head(qb_ind_dat_other$DATETIME_LOCAL,1))
+            qb_dd_4 <- as.Date(head(qb_ind_dat_solar$DATETIME_LOCAL,1))-(7)
+            qb_dd_4_1 <- paste(qb_dd_4,"00:00:00",sep=" ")
+            qb_dd_4_2 <- as.Date(head(qb_ind_dat_solar$DATETIME_LOCAL,1))
+            qb_dd_5 <- as.Date(head(qb_ind_dat_thermal$DATETIME_LOCAL,1))-(120)
+            qb_dd_5_1 <- paste(qb_dd_5,"00:00:00",sep=" ")
+            qb_dd_5_2 <- as.Date(head(qb_ind_dat_thermal$DATETIME_LOCAL,1))
+            qb_dd_6 <- as.Date(head(qb_ind_dat_totprod$DATETIME_LOCAL,1))-(7)
+            qb_dd_6_1 <- paste(qb_dd_6,"00:00:00",sep=" ")
+            qb_dd_6_2 <- as.Date(head(qb_ind_dat_totprod$DATETIME_LOCAL,1))
+            qb_dd_7 <- as.Date(head(qb_ind_dat_wind$DATETIME_LOCAL,1))-(7)
+            qb_dd_7_1 <- paste(qb_dd_7,"00:00:00",sep=" ")
+            qb_dd_7_2 <- as.Date(head(qb_ind_dat_wind$DATETIME_LOCAL,1))
+            updateSliderInput(session, "qb_dates_1",
+                              min = as.Date(tail(qb_ind_dat_demand$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_demand$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_1_1),qb_dd_1_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_2",
+                              min = as.Date(tail(qb_ind_dat_hydro$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_hydro$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_2_1),qb_dd_2_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_3",
+                              min = as.Date(tail(qb_ind_dat_other$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_other$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_3_1),qb_dd_3_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_4",
+                              min = as.Date(tail(qb_ind_dat_solar$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_solar$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_4_1),qb_dd_4_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_5",
+                              min = as.Date(tail(qb_ind_dat_thermal$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_thermal$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_5_1),qb_dd_5_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_6",
+                              min = as.Date(tail(qb_ind_dat_totprod$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_totprod$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_6_1),qb_dd_6_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_7",
+                              min = as.Date(tail(qb_ind_dat_wind$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_wind$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_7_1),qb_dd_7_2),
+                              timeFormat="%Y-%m-%d")
+            log_success("Using latest data for QB")
+          }
+          else{
+            qb_ind_dat_demand <<- dataset("DF_HFED_QC","CA_QC","H","DEMAND",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_hydro <<- dataset("DF_HFED_QC","CA_QC","H","HYDRO",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_other <<- dataset("DF_HFED_QC","CA_QC","H","OTHER",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_solar <<- dataset("DF_HFED_QC","CA_QC","H","SOLAR",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_thermal <<- dataset("DF_HFED_QC","CA_QC","H","THERMAL",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_totprod <<- dataset("DF_HFED_QC","CA_QC","H","TOTAL_PRODUCTION",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            qb_ind_dat_wind <<- dataset("DF_HFED_QC","CA_QC","H","WIND",NULL,NULL,500) %>% arrange(desc(DATETIME_LOCAL)) %>% collect()
+            #updating the dates after the data loads (QB)
+            qb_dd_1 <- as.Date(head(qb_ind_dat_demand$DATETIME_LOCAL,1))-(7)
+            qb_dd_1_1 <- paste(qb_dd_1,"00:00:00",sep=" ")
+            qb_dd_1_2 <- as.Date(head(qb_ind_dat_demand$DATETIME_LOCAL,1))
+            qb_dd_2 <- as.Date(head(qb_ind_dat_hydro$DATETIME_LOCAL,1))-(7)
+            qb_dd_2_1 <- paste(qb_dd_2,"00:00:00",sep=" ")
+            qb_dd_2_2 <- as.Date(head(qb_ind_dat_hydro$DATETIME_LOCAL,1))
+            qb_dd_3 <- as.Date(head(qb_ind_dat_other$DATETIME_LOCAL,1))-(7)
+            qb_dd_3_1 <- paste(qb_dd_3,"00:00:00",sep=" ")
+            qb_dd_3_2 <- as.Date(head(qb_ind_dat_other$DATETIME_LOCAL,1))
+            qb_dd_4 <- as.Date(head(qb_ind_dat_solar$DATETIME_LOCAL,1))-(7)
+            qb_dd_4_1 <- paste(qb_dd_4,"00:00:00",sep=" ")
+            qb_dd_4_2 <- as.Date(head(qb_ind_dat_solar$DATETIME_LOCAL,1))
+            qb_dd_5 <- as.Date(head(qb_ind_dat_thermal$DATETIME_LOCAL,1))-(120)
+            qb_dd_5_1 <- paste(qb_dd_5,"00:00:00",sep=" ")
+            qb_dd_5_2 <- as.Date(head(qb_ind_dat_thermal$DATETIME_LOCAL,1))
+            qb_dd_6 <- as.Date(head(qb_ind_dat_totprod$DATETIME_LOCAL,1))-(7)
+            qb_dd_6_1 <- paste(qb_dd_6,"00:00:00",sep=" ")
+            qb_dd_6_2 <- as.Date(head(qb_ind_dat_totprod$DATETIME_LOCAL,1))
+            qb_dd_7 <- as.Date(head(qb_ind_dat_wind$DATETIME_LOCAL,1))-(7)
+            qb_dd_7_1 <- paste(qb_dd_7,"00:00:00",sep=" ")
+            qb_dd_7_2 <- as.Date(head(qb_ind_dat_wind$DATETIME_LOCAL,1))
+            updateSliderInput(session, "qb_dates_1",
+                              min = as.Date(tail(qb_ind_dat_demand$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_demand$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_1_1),qb_dd_1_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_2",
+                              min = as.Date(tail(qb_ind_dat_hydro$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_hydro$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_2_1),qb_dd_2_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_3",
+                              min = as.Date(tail(qb_ind_dat_other$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_other$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_3_1),qb_dd_3_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_4",
+                              min = as.Date(tail(qb_ind_dat_solar$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_solar$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_4_1),qb_dd_4_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_5",
+                              min = as.Date(tail(qb_ind_dat_thermal$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_thermal$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_5_1),qb_dd_5_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_6",
+                              min = as.Date(tail(qb_ind_dat_totprod$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_totprod$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_6_1),qb_dd_6_2),
+                              timeFormat="%Y-%m-%d")
+            updateSliderInput(session, "qb_dates_7",
+                              min = as.Date(tail(qb_ind_dat_wind$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              max = as.Date(head(qb_ind_dat_wind$DATETIME_LOCAL,1),"%Y-%m-%d"),
+                              value=c(as.Date(qb_dd_7_1),qb_dd_7_2),
+                              timeFormat="%Y-%m-%d")
+            log_error("Using NROWS data for QB")
+          }
+          
+          st_tm_dsh_qb_1 <- Sys.time()
+          qb_date_ind_1_1 <- reactive({paste(input$qb_dates_1[1],"00:00:00",sep = " ")})
+          qb_date_ind_1_2 <- reactive({paste(input$qb_dates_1[2],"00:00:00",sep = " ")})
+          qb_ind_demand_subset_dat <- reactive({subset(qb_ind_dat_demand,subset = (qb_ind_dat_demand$DATETIME_LOCAL >= qb_date_ind_1_1() & qb_ind_dat_demand$DATETIME_LOCAL <= qb_date_ind_1_2()))})
+          qb_ind_demand_dat_ts <- reactive({xts(qb_ind_dat_demand$OBS_VALUE,qb_ind_dat_demand$DATETIME_LOCAL)})
+          qb_ind_demand_subset_ts <- reactive({xts(qb_ind_demand_subset_dat()$OBS_VALUE,qb_ind_demand_subset_dat()$DATETIME_LOCAL)})
+          qb_ind_demand_dat_ts_yearly <- reactive({to.yearly(qb_ind_demand_dat_ts())})
+          qb_ind_demand_dat_ts_monthly <- reactive({to.monthly(qb_ind_demand_subset_ts())})
+          qb_ind_demand_dat_ts_weekly <- reactive({to.weekly(qb_ind_demand_subset_ts())})
+          qb_ind_demand_dat_ts_daily <- reactive({to.daily(qb_ind_demand_subset_ts())})
+          qb_ind_demand_dat_ts_hourly <- reactive({
+            qb_hr <- to.hourly(qb_ind_demand_subset_ts())
+            return(qb_hr)
+          })
+          
+          output$QB_DEMAND_YEARLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_demand_dat_ts_yearly()[,(colnames(qb_ind_demand_dat_ts_yearly()) %in% c('qb_ind_demand_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_demand_dat_ts_yearly()[,(colnames(qb_ind_demand_dat_ts_yearly()) %in% c('qb_ind_demand_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_DEMAND_WEEKLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_demand_dat_ts_weekly()[,(colnames(qb_ind_demand_dat_ts_weekly()) %in% c('qb_ind_demand_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_demand_dat_ts_weekly()[,(colnames(qb_ind_demand_dat_ts_weekly()) %in% c('qb_ind_demand_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE)})
+          output$QB_DEMAND_DAILY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_demand_dat_ts_daily()[,(colnames(qb_ind_demand_dat_ts_daily()) %in% c('qb_ind_demand_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_demand_dat_ts_daily()[,(colnames(qb_ind_demand_dat_ts_daily()) %in% c('qb_ind_demand_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_DEMAND_HOURLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_demand_dat_ts_hourly()[,(colnames(qb_ind_demand_dat_ts_hourly()) %in% c('qb_ind_demand_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_demand_dat_ts_hourly()[,(colnames(qb_ind_demand_dat_ts_hourly()) %in% c('qb_ind_demand_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_DEMAND_ALL <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_demand_subset_ts(), type = "line", name = "Load: ") %>%
+              hc_navigator(enabled = TRUE) 
+              
+          })
+          en_tm_dsh_qb_1 <- Sys.time()
+          log_info('{difftime(en_tm_dsh_qb_1,st_tm_dsh_qb_1)} sec for QB Main 1 dashboard')
+          
+          st_tm_dsh_qb_2 <- Sys.time()
+          qb_date_ind_2_1 <- reactive({paste(input$qb_dates_2[1],"00:00:00",sep = " ")})
+          qb_date_ind_2_2 <- reactive({paste(input$qb_dates_2[2],"00:00:00",sep = " ")})
+          qb_ind_hydro_subset_dat <- reactive({subset(qb_ind_dat_hydro,subset = (qb_ind_dat_hydro$DATETIME_LOCAL >= qb_date_ind_2_1() & qb_ind_dat_hydro$DATETIME_LOCAL <= qb_date_ind_2_2()))})
+          qb_ind_hydro_dat_ts <- reactive({xts(qb_ind_dat_hydro$OBS_VALUE,qb_ind_dat_hydro$DATETIME_LOCAL)})
+          qb_ind_hydro_subset_ts <- reactive({xts(qb_ind_hydro_subset_dat()$OBS_VALUE,qb_ind_hydro_subset_dat()$DATETIME_LOCAL)})
+          qb_ind_hydro_dat_ts_yearly <- reactive({to.yearly(qb_ind_hydro_dat_ts())})
+          qb_ind_hydro_dat_ts_monthly <- reactive({to.monthly(qb_ind_hydro_subset_ts())})
+          qb_ind_hydro_dat_ts_weekly <- reactive({to.weekly(qb_ind_hydro_subset_ts())})
+          qb_ind_hydro_dat_ts_daily <- reactive({to.daily(qb_ind_hydro_subset_ts())})
+          qb_ind_hydro_dat_ts_hourly <- reactive({
+            qb_hr <- to.hourly(qb_ind_hydro_subset_ts())
+            return(qb_hr)
+          })
+          
+          output$QB_HYDRO_YEARLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_hydro_dat_ts_yearly()[,(colnames(qb_ind_hydro_dat_ts_yearly()) %in% c('qb_ind_hydro_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_hydro_dat_ts_yearly()[,(colnames(qb_ind_hydro_dat_ts_yearly()) %in% c('qb_ind_hydro_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE)})
+          output$QB_HYDRO_WEEKLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_hydro_dat_ts_weekly()[,(colnames(qb_ind_hydro_dat_ts_weekly()) %in% c('qb_ind_hydro_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_hydro_dat_ts_weekly()[,(colnames(qb_ind_hydro_dat_ts_weekly()) %in% c('qb_ind_hydro_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE)})
+          output$QB_HYDRO_DAILY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_hydro_dat_ts_daily()[,(colnames(qb_ind_hydro_dat_ts_daily()) %in% c('qb_ind_hydro_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_hydro_dat_ts_daily()[,(colnames(qb_ind_hydro_dat_ts_daily()) %in% c('qb_ind_hydro_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_HYDRO_HOURLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_hydro_dat_ts_hourly()[,(colnames(qb_ind_hydro_dat_ts_hourly()) %in% c('qb_ind_hydro_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_hydro_dat_ts_hourly()[,(colnames(qb_ind_hydro_dat_ts_hourly()) %in% c('qb_ind_hydro_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_HYDRO_ALL <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_hydro_subset_ts(), type = "line", name = "Load: ") %>%
+              hc_navigator(enabled = TRUE) })
+          en_tm_dsh_qb_2 <- Sys.time()
+          log_info('{difftime(en_tm_dsh_qb_2,st_tm_dsh_qb_2)} sec for QB Main 2 dashboard')
+          
+          st_tm_dsh_qb_3 <- Sys.time()
+          qb_date_ind_3_1 <- reactive({paste(input$qb_dates_3[1],"00:00:00",sep = " ")})
+          qb_date_ind_3_2 <- reactive({paste(input$qb_dates_3[2],"00:00:00",sep = " ")})
+          qb_ind_other_subset_dat <- reactive({subset(qb_ind_dat_other,subset = (qb_ind_dat_other$DATETIME_LOCAL >= qb_date_ind_3_1() & qb_ind_dat_other$DATETIME_LOCAL <= qb_date_ind_3_2()))})
+          qb_ind_other_dat_ts <- reactive({xts(qb_ind_dat_other$OBS_VALUE,qb_ind_dat_other$DATETIME_LOCAL)})
+          qb_ind_other_subset_ts <- reactive({xts(qb_ind_other_subset_dat()$OBS_VALUE,qb_ind_other_subset_dat()$DATETIME_LOCAL)})
+          qb_ind_other_dat_ts_yearly <- reactive({to.yearly(qb_ind_other_dat_ts())})
+          qb_ind_other_dat_ts_monthly <- reactive({to.monthly(qb_ind_other_subset_ts())})
+          qb_ind_other_dat_ts_weekly <- reactive({to.weekly(qb_ind_other_subset_ts())})
+          qb_ind_other_dat_ts_daily <- reactive({to.daily(qb_ind_other_subset_ts())})
+          qb_ind_other_dat_ts_hourly <- reactive({
+            qb_hr <- to.hourly(qb_ind_other_subset_ts())
+            return(qb_hr)
+          })
+          
+          output$QB_OTHER_YEARLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_other_dat_ts_yearly()[,(colnames(qb_ind_other_dat_ts_yearly()) %in% c('qb_ind_other_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_other_dat_ts_yearly()[,(colnames(qb_ind_other_dat_ts_yearly()) %in% c('qb_ind_other_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_OTHER_WEEKLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_other_dat_ts_weekly()[,(colnames(qb_ind_other_dat_ts_weekly()) %in% c('qb_ind_other_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_other_dat_ts_weekly()[,(colnames(qb_ind_other_dat_ts_weekly()) %in% c('qb_ind_other_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_OTHER_DAILY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_other_dat_ts_daily()[,(colnames(qb_ind_other_dat_ts_daily()) %in% c('qb_ind_other_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_other_dat_ts_daily()[,(colnames(qb_ind_other_dat_ts_daily()) %in% c('qb_ind_other_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_OTHER_HOURLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_other_dat_ts_hourly()[,(colnames(qb_ind_other_dat_ts_hourly()) %in% c('qb_ind_other_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_other_dat_ts_hourly()[,(colnames(qb_ind_other_dat_ts_hourly()) %in% c('qb_ind_other_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_OTHER_ALL <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_other_subset_ts(), type = "line", name = "Load: ") %>%
+              hc_navigator(enabled = TRUE) })
+          en_tm_dsh_qb_3 <- Sys.time()
+          log_info('{difftime(en_tm_dsh_qb_3,st_tm_dsh_qb_3)} sec for QB Main 3 dashboard')
+          
+          st_tm_dsh_qb_4 <- Sys.time()
+          qb_date_ind_4_1 <- reactive({paste(input$qb_dates_4[1],"00:00:00",sep = " ")})
+          qb_date_ind_4_2 <- reactive({paste(input$qb_dates_4[2],"00:00:00",sep = " ")})
+          qb_ind_solar_subset_dat <- reactive({subset(qb_ind_dat_solar,subset = (qb_ind_dat_solar$DATETIME_LOCAL >= qb_date_ind_4_1() & qb_ind_dat_solar$DATETIME_LOCAL <= qb_date_ind_4_2()))})
+          qb_ind_solar_dat_ts <- reactive({xts(qb_ind_dat_solar$OBS_VALUE,qb_ind_dat_solar$DATETIME_LOCAL)})
+          qb_ind_solar_subset_ts <- reactive({xts(qb_ind_solar_subset_dat()$OBS_VALUE,qb_ind_solar_subset_dat()$DATETIME_LOCAL)})
+          qb_ind_solar_dat_ts_yearly <- reactive({to.yearly(qb_ind_solar_dat_ts())})
+          qb_ind_solar_dat_ts_monthly <- reactive({to.monthly(qb_ind_solar_subset_ts())})
+          qb_ind_solar_dat_ts_weekly <- reactive({to.weekly(qb_ind_solar_subset_ts())})
+          qb_ind_solar_dat_ts_daily <- reactive({to.daily(qb_ind_solar_subset_ts())})
+          qb_ind_solar_dat_ts_hourly <- reactive({
+            qb_hr <- to.hourly(qb_ind_solar_subset_ts())
+            return(qb_hr)
+          })
+          
+          output$QB_SOLAR_YEARLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_solar_dat_ts_yearly()[,(colnames(qb_ind_solar_dat_ts_yearly()) %in% c('qb_ind_solar_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_solar_dat_ts_yearly()[,(colnames(qb_ind_solar_dat_ts_yearly()) %in% c('qb_ind_solar_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_SOLAR_WEEKLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_solar_dat_ts_weekly()[,(colnames(qb_ind_solar_dat_ts_weekly()) %in% c('qb_ind_solar_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_solar_dat_ts_weekly()[,(colnames(qb_ind_solar_dat_ts_weekly()) %in% c('qb_ind_solar_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_SOLAR_DAILY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_solar_dat_ts_daily()[,(colnames(qb_ind_solar_dat_ts_daily()) %in% c('qb_ind_solar_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_solar_dat_ts_daily()[,(colnames(qb_ind_solar_dat_ts_daily()) %in% c('qb_ind_solar_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_SOLAR_HOURLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_solar_dat_ts_hourly()[,(colnames(qb_ind_solar_dat_ts_hourly()) %in% c('qb_ind_solar_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_solar_dat_ts_hourly()[,(colnames(qb_ind_solar_dat_ts_hourly()) %in% c('qb_ind_solar_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_SOLAR_ALL <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_solar_subset_ts(), type = "line", name = "Load: ") %>%
+              hc_navigator(enabled = TRUE) })
+          en_tm_dsh_qb_4 <- Sys.time()
+          log_info('{difftime(en_tm_dsh_qb_4,st_tm_dsh_qb_4)} sec for QB Main 4 dashboard')
+          
+          st_tm_dsh_qb_5 <- Sys.time()
+          qb_date_ind_5_1 <- reactive({paste(input$qb_dates_5[1],"00:00:00",sep = " ")})
+          qb_date_ind_5_2 <- reactive({paste(input$qb_dates_5[2],"00:00:00",sep = " ")})
+          qb_ind_thermal_subset_dat <- reactive({subset(qb_ind_dat_thermal,subset = (qb_ind_dat_thermal$DATETIME_LOCAL >= qb_date_ind_5_1() & qb_ind_dat_thermal$DATETIME_LOCAL <= qb_date_ind_5_2()))})
+          qb_ind_thermal_dat_ts <- reactive({xts(qb_ind_dat_thermal$OBS_VALUE,qb_ind_dat_thermal$DATETIME_LOCAL)})
+          qb_ind_thermal_subset_ts <- reactive({xts(qb_ind_thermal_subset_dat()$OBS_VALUE,qb_ind_thermal_subset_dat()$DATETIME_LOCAL)})
+          qb_ind_thermal_dat_ts_yearly <- reactive({to.yearly(qb_ind_thermal_dat_ts())})
+          qb_ind_thermal_dat_ts_monthly <- reactive({to.monthly(qb_ind_thermal_subset_ts())})
+          qb_ind_thermal_dat_ts_weekly <- reactive({to.weekly(qb_ind_thermal_subset_ts())})
+          qb_ind_thermal_dat_ts_daily <- reactive({to.daily(qb_ind_thermal_subset_ts())})
+          qb_ind_thermal_dat_ts_hourly <- reactive({
+            qb_hr <- to.hourly(qb_ind_thermal_subset_ts())
+            return(qb_hr)
+          })
+          
+          output$QB_THERMAL_YEARLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_thermal_dat_ts_yearly()[,(colnames(qb_ind_thermal_dat_ts_yearly()) %in% c('qb_ind_thermal_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_thermal_dat_ts_yearly()[,(colnames(qb_ind_thermal_dat_ts_yearly()) %in% c('qb_ind_thermal_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_THERMAL_WEEKLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_thermal_dat_ts_weekly()[,(colnames(qb_ind_thermal_dat_ts_weekly()) %in% c('qb_ind_thermal_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_thermal_dat_ts_weekly()[,(colnames(qb_ind_thermal_dat_ts_weekly()) %in% c('qb_ind_thermal_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_THERMAL_DAILY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_thermal_dat_ts_daily()[,(colnames(qb_ind_thermal_dat_ts_daily()) %in% c('qb_ind_thermal_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_thermal_dat_ts_daily()[,(colnames(qb_ind_thermal_dat_ts_daily()) %in% c('qb_ind_thermal_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_THERMAL_HOURLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_thermal_dat_ts_hourly()[,(colnames(qb_ind_thermal_dat_ts_hourly()) %in% c('qb_ind_thermal_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_thermal_dat_ts_hourly()[,(colnames(qb_ind_thermal_dat_ts_hourly()) %in% c('qb_ind_thermal_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_THERMAL_ALL <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_thermal_subset_ts(), type = "line", name = "Load: ") %>%
+              hc_navigator(enabled = TRUE) })
+          en_tm_dsh_qb_5 <- Sys.time()
+          log_info('{difftime(en_tm_dsh_qb_5,st_tm_dsh_qb_5)} sec for QB Main 5 dashboard')
+          
+          st_tm_dsh_qb_6 <- Sys.time()
+          qb_date_ind_6_1 <- reactive({paste(input$qb_dates_6[1],"00:00:00",sep = " ")})
+          qb_date_ind_6_2 <- reactive({paste(input$qb_dates_6[2],"00:00:00",sep = " ")})
+          qb_ind_totprod_subset_dat <- reactive({subset(qb_ind_dat_totprod,subset = (qb_ind_dat_totprod$DATETIME_LOCAL >= qb_date_ind_6_1() & qb_ind_dat_totprod$DATETIME_LOCAL <= qb_date_ind_6_2()))})
+          qb_ind_totprod_dat_ts <- reactive({xts(qb_ind_dat_totprod$OBS_VALUE,qb_ind_dat_totprod$DATETIME_LOCAL)})
+          qb_ind_totprod_subset_ts <- reactive({xts(qb_ind_totprod_subset_dat()$OBS_VALUE,qb_ind_totprod_subset_dat()$DATETIME_LOCAL)})
+          qb_ind_totprod_dat_ts_yearly <- reactive({to.yearly(qb_ind_totprod_dat_ts())})
+          qb_ind_totprod_dat_ts_monthly <- reactive({to.monthly(qb_ind_totprod_subset_ts())})
+          qb_ind_totprod_dat_ts_weekly <- reactive({to.weekly(qb_ind_totprod_subset_ts())})
+          qb_ind_totprod_dat_ts_daily <- reactive({to.daily(qb_ind_totprod_subset_ts())})
+          qb_ind_totprod_dat_ts_hourly <- reactive({
+            qb_hr <- to.hourly(qb_ind_totprod_subset_ts())
+            return(qb_hr)
+          })
+          
+          output$QB_TOTPROD_YEARLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_totprod_dat_ts_yearly()[,(colnames(qb_ind_totprod_dat_ts_yearly()) %in% c('qb_ind_totprod_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_totprod_dat_ts_yearly()[,(colnames(qb_ind_totprod_dat_ts_yearly()) %in% c('qb_ind_totprod_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_TOTPROD_WEEKLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_totprod_dat_ts_weekly()[,(colnames(qb_ind_totprod_dat_ts_weekly()) %in% c('qb_ind_totprod_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_totprod_dat_ts_weekly()[,(colnames(qb_ind_totprod_dat_ts_weekly()) %in% c('qb_ind_totprod_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_TOTPROD_DAILY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_totprod_dat_ts_daily()[,(colnames(qb_ind_totprod_dat_ts_daily()) %in% c('qb_ind_totprod_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_totprod_dat_ts_daily()[,(colnames(qb_ind_totprod_dat_ts_daily()) %in% c('qb_ind_totprod_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_TOTPROD_HOURLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_totprod_dat_ts_hourly()[,(colnames(qb_ind_totprod_dat_ts_hourly()) %in% c('qb_ind_totprod_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_totprod_dat_ts_hourly()[,(colnames(qb_ind_totprod_dat_ts_hourly()) %in% c('qb_ind_totprod_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_TOTPROD_ALL <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_totprod_subset_ts(), type = "line", name = "Load: ") %>%
+              hc_navigator(enabled = TRUE) })
+          en_tm_dsh_qb_6 <- Sys.time()
+          log_info('{difftime(en_tm_dsh_qb_6,st_tm_dsh_qb_6)} sec for QB Main 6 dashboard')
+          
+          st_tm_dsh_qb_7 <- Sys.time()
+          qb_date_ind_7_1 <- reactive({paste(input$qb_dates_7[1],"00:00:00",sep = " ")})
+          qb_date_ind_7_2 <- reactive({paste(input$qb_dates_7[2],"00:00:00",sep = " ")})
+          qb_ind_wind_subset_dat <- reactive({subset(qb_ind_dat_wind,subset = (qb_ind_dat_wind$DATETIME_LOCAL >= qb_date_ind_7_1() & qb_ind_dat_wind$DATETIME_LOCAL <= qb_date_ind_7_2()))})
+          qb_ind_wind_dat_ts <- reactive({xts(qb_ind_dat_wind$OBS_VALUE,qb_ind_dat_wind$DATETIME_LOCAL)})
+          qb_ind_wind_subset_ts <- reactive({xts(qb_ind_wind_subset_dat()$OBS_VALUE,qb_ind_wind_subset_dat()$DATETIME_LOCAL)})
+          qb_ind_wind_dat_ts_yearly <- reactive({to.yearly(qb_ind_wind_dat_ts())})
+          qb_ind_wind_dat_ts_monthly <- reactive({to.monthly(qb_ind_wind_subset_ts())})
+          qb_ind_wind_dat_ts_weekly <- reactive({to.weekly(qb_ind_wind_subset_ts())})
+          qb_ind_wind_dat_ts_daily <- reactive({to.daily(qb_ind_wind_subset_ts())})
+          qb_ind_wind_dat_ts_hourly <- reactive({
+            qb_hr <- to.hourly(qb_ind_wind_subset_ts())
+            return(qb_hr)
+          })
+          
+          output$QB_WIND_YEARLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_wind_dat_ts_yearly()[,(colnames(qb_ind_wind_dat_ts_yearly()) %in% c('qb_ind_wind_dat_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_wind_dat_ts_yearly()[,(colnames(qb_ind_wind_dat_ts_yearly()) %in% c('qb_ind_wind_dat_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_WIND_WEEKLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_wind_dat_ts_weekly()[,(colnames(qb_ind_wind_dat_ts_weekly()) %in% c('qb_ind_wind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_wind_dat_ts_weekly()[,(colnames(qb_ind_wind_dat_ts_weekly()) %in% c('qb_ind_wind_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_WIND_DAILY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_wind_dat_ts_daily()[,(colnames(qb_ind_wind_dat_ts_daily()) %in% c('qb_ind_wind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_wind_dat_ts_daily()[,(colnames(qb_ind_wind_dat_ts_daily()) %in% c('qb_ind_wind_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_WIND_HOURLY <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_wind_dat_ts_hourly()[,(colnames(qb_ind_wind_dat_ts_hourly()) %in% c('qb_ind_wind_subset_ts().High'))], type = "line", name = "High Load: ", color = "lightgreen") %>%
+              hc_add_series(qb_ind_wind_dat_ts_hourly()[,(colnames(qb_ind_wind_dat_ts_hourly()) %in% c('qb_ind_wind_subset_ts().Low'))], type = "line", name = "Low Load: ", color = "red") %>%
+              hc_navigator(enabled = TRUE) })
+          output$QB_WIND_ALL <- renderUI({
+            highchart() %>%
+              hc_xAxis(type = "datetime") %>%
+              hc_add_series(qb_ind_wind_subset_ts(), type = "line", name = "Load: ") %>%
+              hc_navigator(enabled = TRUE) })
+          en_tm_dsh_qb_7 <- Sys.time()
+          log_info('{difftime(en_tm_dsh_qb_7,st_tm_dsh_qb_7)} sec for QB Main 7 dashboard')
+        }  
+        else if(qb_status() != 200)
+        {
+          #GPH 1
+          output$QB_DEMAD_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_DEMAND_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_DEMAND_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_DEMAND_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_DEMAND_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          #GPH 1 END
+          #GPH 2
+          output$QB_HYDRO_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_HYDRO_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_HYDRO_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_HYDRO_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_HYDRO_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          #GPH 2 END
+          #GPH 3
+          output$QB_OTHER_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_OTHER_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_OTHER_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_OTHER_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_OTHER_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          #GPH 3 END
+          #GPH 4
+          output$QB_SOLAR_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_SOLAR_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_SOLAR_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_SOLAR_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_SOLAR_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          #GPH 4 END
+          #GPH 5
+          output$QB_THERMAL_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_THERMAL_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_THERMAL_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_THERMAL_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_THERMAL_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          #GPH 5 END
+          #GPH 6
+          output$QB_TOTPROD_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_TOTPROD_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_TOTPROD_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_TOTPROD_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_TOTPROD_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          #GPH 6 END
+          #GPH 6
+          output$QB_WIND_YEARLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_WIND_WEEKLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_WIND_DAILY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_WIND_HOURLY <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          output$QB_WIND_ALL <- renderUI({HTML(paste("<div style='height:400px;'>
+                                     <br>
+                                     <i id='qb_er_txt' class='fa fa-exclamation'> Error, Dashboard Not Available. Reason:",qb_status_ind(),"Error</i>
+                                     </div>
+                                          "))})
+          #GPH 6 END
+          log_error("Error Dashboard started - provincial page, Status:{qb_status_ind()}")
+        }
+      })}
+    
     if(input$rted_menu == "Dwn"){
       log_info("------------------------------------------DOWNLOAD SECTION------------------------------------------------------")
       
       observeEvent(input$prvnc_list,{
       if(input$prvnc_list == "Newfoundland & Labrador")
        {
-      updateSelectInput(session,"enf_flow", choices = list("DEMAND"),selected = "DEMAND")
+      updateSelectInput(session,"enf_flow_nfl", choices = list("DEMAND"),selected = "DEMAND")
         dataflow <- reactive({"DF_HFED_NL"})
         prvnc_code <- reactive({"CA_NL"})
-        var_choice <- reactive({input$enf_flow})
-      NFL_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1)
-      updateDateRangeInput(session, "download_dates",
-                                    start = NFL_dwnld_data[2,'DATETIME_LOCAL'],
-                                    min = NFL_dwnld_data[2,'DATETIME_LOCAL'],
-                                    end = NFL_dwnld_data[1,'DATETIME_LOCAL'],
-                                    max = NFL_dwnld_data[1,'DATETIME_LOCAL'])
-      nfl_dwnld_date_1 <- reactive({as.character(input$download_dates[1])})
-      nfl_dwnld_date_2 <- reactive({as.character(input$download_dates[2])})
-      nfl_user_data <- reactive({dataset("DF_HFED_NL","CA_NL","H",input$enf_flow,nfl_dwnld_date_1(),nfl_dwnld_date_2(),NULL)})
+        var_choice <- reactive({input$enf_flow_nfl})
+      NFL_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1) %>% arrange(desc(DATETIME_LOCAL))
+      updateDateRangeInput(session, "download_dates_nfl",
+                                    start = as.Date(NFL_dwnld_data[2,'DATETIME_LOCAL']),
+                                    min = as.Date(NFL_dwnld_data[2,'DATETIME_LOCAL']),
+                                    end = as.Date(NFL_dwnld_data[1,'DATETIME_LOCAL']),
+                                    max = as.Date(NFL_dwnld_data[1,'DATETIME_LOCAL']))
+      nfl_dwnld_date_1 <- reactive({as.character(input$download_dates_nfl[1])})
+      nfl_dwnld_date_2 <- reactive({as.character(input$download_dates_nfl[2])})
+      nfl_user_data <- reactive({dataset("DF_HFED_NL","CA_NL","H",input$enf_flow_nfl,nfl_dwnld_date_1(),nfl_dwnld_date_2(),NULL)})
       output$DOWNLOAD_TABLE <- DT::renderDataTable({(nfl_user_data()[c((1:3),(5:8),11,13)])})
       output$button_dwnld <- downloadHandler(
                 filename = function() {
-                  flname <- paste("HFED_",input$prvnc_list,input$enf_flow,"data")
+                  flname <- paste("HFED_",input$prvnc_list,input$enf_flow_nfl,"data")
                   paste(flname,"csv",sep = ".")
                 },
                 content = function(file)
@@ -3902,25 +4602,23 @@ else if(input$rted_menu == "pei")
       }
       else if(input$prvnc_list == "Prince Edward Island")
       {
-        
-        observe({
-        updateSelectInput(session,"enf_flow", choices = list("ON_ISL_LOAD","ON_ISL_FOSSIL","WIND_EXPORT","WIND_PERCENT","ON_ISL_WIND","WIND_LOCAL","IMPORT_CABLES"),selected = "ON_ISL_LOAD")
+        updateSelectInput(session,"enf_flow_pei", choices = list("ON_ISL_LOAD","ON_ISL_FOSSIL","WIND_EXPORT","WIND_PERCENT","ON_ISL_WIND","WIND_LOCAL","IMPORT_CABLES"),selected = "ON_ISL_LOAD")
           dataflow <- reactive({"DF_HFED_PE"})
           prvnc_code <- reactive({"CA_PE"})
-          var_choice <- reactive({input$enf_flow})
-          pei_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1)
-        updateDateRangeInput(session, "download_dates",
-                             start = pei_dwnld_data[2,'DATETIME_LOCAL'],
-                             min = pei_dwnld_data[2,'DATETIME_LOCAL'],
-                             end = pei_dwnld_data[1,'DATETIME_LOCAL'],
-                             max = pei_dwnld_data[1,'DATETIME_LOCAL'])
-        pei_dwnld_date_1 <- reactive({as.character(input$download_dates[1])})
-        pei_dwnld_date_2 <- reactive({as.character(input$download_dates[2])})
-        pei_user_data <- reactive({dataset("DF_HFED_PE","CA_PE","H",input$enf_flow,pei_dwnld_date_1(),pei_dwnld_date_2(),NULL)})
+          var_choice <- reactive({input$enf_flow_pei})
+          pei_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1) %>% arrange(desc(DATETIME_LOCAL))
+        updateDateRangeInput(session, "download_dates_pei",
+                             start = as.Date(pei_dwnld_data[2,'DATETIME_LOCAL']),
+                             min = as.Date(pei_dwnld_data[2,'DATETIME_LOCAL']),
+                             end = as.Date(pei_dwnld_data[1,'DATETIME_LOCAL']),
+                             max = as.Date(pei_dwnld_data[1,'DATETIME_LOCAL']))
+        pei_dwnld_date_1 <- reactive({as.character(input$download_dates_pei[1])})
+        pei_dwnld_date_2 <- reactive({as.character(input$download_dates_pei[2])})
+        pei_user_data <- reactive({dataset("DF_HFED_PE","CA_PE","H",input$enf_flow_pei,pei_dwnld_date_1(),pei_dwnld_date_2(),NULL)})
         output$DOWNLOAD_TABLE <- DT::renderDataTable({(pei_user_data()[c((1:3),(5:8),11,13)])})
         output$button_dwnld <- downloadHandler(
           filename = function() {
-            flname <- paste("HFED_",input$prvnc_list,input$enf_flow,"data")
+            flname <- paste("HFED_",input$prvnc_list,input$enf_flow_pei,"data")
             paste(flname,"csv",sep = ".")
           },
           content = function(file)
@@ -3929,29 +4627,26 @@ else if(input$rted_menu == "pei")
             write.csv(pei_user_data(), file, row.names = FALSE)
           }
         )
-        })
       }
        else if(input$prvnc_list == "Nova Scotia")
         {
-          
-          observe({
-          updateSelectInput(session,"enf_flow", choices = list("LOAD","EXPORT","IMPORT","NSI"),selected = "LOAD")
+          updateSelectInput(session,"enf_flow_ns", choices = list("LOAD","EXPORT","IMPORT","NSI"),selected = "LOAD")
             dataflow <- reactive({"DF_HFED_NS"})
             prvnc_code <- reactive({"CA_NS"})
-            var_choice <- reactive({input$enf_flow})
-            ns_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1)
-          updateDateRangeInput(session, "download_dates",
-                               start = ns_dwnld_data[1,'DATETIME_LOCAL'],
-                               min = ns_dwnld_data[1,'DATETIME_LOCAL'],
-                               end = ns_dwnld_data[2,'DATETIME_LOCAL'],
-                               max = ns_dwnld_data[2,'DATETIME_LOCAL'])
-          ns_dwnld_date_1 <- reactive({as.character(input$download_dates[1])})
-          ns_dwnld_date_2 <- reactive({as.character(input$download_dates[2])})
-          ns_user_data <- reactive({dataset("DF_HFED_NS","CA_NS","H",input$enf_flow,ns_dwnld_date_1(),ns_dwnld_date_2(),NULL)})
+            var_choice <- reactive({input$enf_flow_ns})
+            ns_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1) %>% arrange(desc(DATETIME_LOCAL))
+          updateDateRangeInput(session, "download_dates_ns",
+                               start = as.Date(ns_dwnld_data[2,'DATETIME_LOCAL']),
+                               min = as.Date(ns_dwnld_data[2,'DATETIME_LOCAL']),
+                               end = as.Date(ns_dwnld_data[1,'DATETIME_LOCAL']),
+                               max = as.Date(ns_dwnld_data[1,'DATETIME_LOCAL']))
+          ns_dwnld_date_1 <- reactive({as.character(input$download_dates_ns[1])})
+          ns_dwnld_date_2 <- reactive({as.character(input$download_dates_ns[2])})
+          ns_user_data <- reactive({dataset("DF_HFED_NS","CA_NS","H",input$enf_flow_ns,ns_dwnld_date_1(),ns_dwnld_date_2(),NULL)})
           output$DOWNLOAD_TABLE <- DT::renderDataTable({(ns_user_data()[c((1:3),(5:8),11,13)])})
           output$button_dwnld <- downloadHandler(
             filename = function() {
-              flname <- paste("HFED_",input$prvnc_list,input$enf_flow,"data")
+              flname <- paste("HFED_",input$prvnc_list,input$enf_flow_ns,"data")
               paste(flname,"csv",sep = ".")
             },
             content = function(file)
@@ -3960,7 +4655,146 @@ else if(input$rted_menu == "pei")
               write.csv(ns_user_data(), file, row.names = FALSE)
             }
           )
-          })
+       }
+        else if(input$prvnc_list == "New Brunswick")
+        {
+          updateSelectInput(session,"enf_flow_nb", choices = list("LOAD","RM_30","RM_10","SRM_10","DEMAND","NSI"),selected = "LOAD")
+          dataflow <- reactive({"DF_HFED_NB"})
+          prvnc_code <- reactive({"CA_NB"})
+          var_choice <- reactive({input$enf_flow_nb})
+          nb_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1) %>% arrange(desc(DATETIME_LOCAL))
+          updateDateRangeInput(session, "download_dates_nb",
+                               start = as.Date(nb_dwnld_data[2,'DATETIME_LOCAL']),
+                               min = as.Date(nb_dwnld_data[2,'DATETIME_LOCAL']),
+                               end = as.Date(nb_dwnld_data[1,'DATETIME_LOCAL']),
+                               max = as.Date(nb_dwnld_data[1,'DATETIME_LOCAL']))
+          nb_dwnld_date_1 <- reactive({as.character(input$download_dates_nb[1])})
+          nb_dwnld_date_2 <- reactive({as.character(input$download_dates_nb[2])})
+          nb_user_data <- reactive({dataset("DF_HFED_NB","CA_NB","H",input$enf_flow_nb,nb_dwnld_date_1(),nb_dwnld_date_2(),NULL)})
+          output$DOWNLOAD_TABLE <- DT::renderDataTable({(nb_user_data()[c((1:3),(5:8),11,13)])})
+          output$button_dwnld <- downloadHandler(
+            filename = function() {
+              flname <- paste("HFED_",input$prvnc_list,input$enf_flow_nb,"data")
+              paste(flname,"csv",sep = ".")
+            },
+            content = function(file)
+            {
+              showNotification("Your File is Downloading, Please wait for some time.", type="message")
+              write.csv(nb_user_data(), file, row.names = FALSE)
+            }
+          )
+        }
+        else if(input$prvnc_list == "Quebec")
+        {
+          updateSelectInput(session,"enf_flow_qb", choices = list("DEMAND","HYDRO","OTHER","SOLAR","THERMAL","TOTAL_PRODUCTION","WIND"),selected = "DEMAND")
+          dataflow <- reactive({"DF_HFED_QC"})
+          prvnc_code <- reactive({"CA_QC"})
+          var_choice <- reactive({input$enf_flow_qb})
+          qb_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1) %>% arrange(desc(DATETIME_LOCAL))
+          updateDateRangeInput(session, "download_dates_qb",
+                               start = as.Date(qb_dwnld_data[2,'DATETIME_LOCAL']),
+                               min = as.Date(qb_dwnld_data[2,'DATETIME_LOCAL']),
+                               end = as.Date(qb_dwnld_data[1,'DATETIME_LOCAL']),
+                               max = as.Date(qb_dwnld_data[1,'DATETIME_LOCAL']))
+          qb_dwnld_date_1 <- reactive({as.character(input$download_dates_qb[1])})
+          qb_dwnld_date_2 <- reactive({as.character(input$download_dates_qb[2])})
+          qb_user_data <- reactive({dataset("DF_HFED_QC","CA_QC","H",input$enf_flow_qb,qb_dwnld_date_1(),qb_dwnld_date_2(),NULL)})
+          output$DOWNLOAD_TABLE <- DT::renderDataTable({(qb_user_data()[c((1:3),(5:8),11,13)])})
+          output$button_dwnld <- downloadHandler(
+            filename = function() {
+              flname <- paste("HFED_",input$prvnc_list,input$enf_flow_qb,"data")
+              paste(flname,"csv",sep = ".")
+            },
+            content = function(file)
+            {
+              showNotification("Your File is Downloading, Please wait for some time.", type="message")
+              write.csv(qb_user_data(), file, row.names = FALSE)
+            }
+          )
+        }
+        else if(input$prvnc_list == "Ontario")
+        {
+          updateSelectInput(session,"enf_flow_on", choices = list("ONTARIO_DEMAND","MARKET_ONTARIO"),selected = "ONTARIO_DEMAND")
+          dataflow <- reactive({"DF_HFED_ON"})
+          prvnc_code <- reactive({"CA_ON"})
+          var_choice <- reactive({input$enf_flow_on})
+          on_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1) %>% arrange(desc(DATETIME_LOCAL))
+          updateDateRangeInput(session, "download_dates_on",
+                               start = as.Date(on_dwnld_data[2,'DATETIME_LOCAL']),
+                               min = as.Date(on_dwnld_data[2,'DATETIME_LOCAL']),
+                               end = as.Date(on_dwnld_data[1,'DATETIME_LOCAL']),
+                               max = as.Date(on_dwnld_data[1,'DATETIME_LOCAL']))
+          on_dwnld_date_1 <- reactive({as.character(input$download_dates_on[1])})
+          on_dwnld_date_2 <- reactive({as.character(input$download_dates_on[2])})
+          on_user_data <- reactive({dataset("DF_HFED_ON","CA_ON","H",input$enf_flow_on,on_dwnld_date_1(),on_dwnld_date_2(),NULL)})
+          output$DOWNLOAD_TABLE <- DT::renderDataTable({(on_user_data()[c((1:3),(5:8),11,13)])})
+          output$button_dwnld <- downloadHandler(
+            filename = function() {
+              flname <- paste("HFED_",input$prvnc_list,input$enf_flow_on,"data")
+              paste(flname,"csv",sep = ".")
+            },
+            content = function(file)
+            {
+              showNotification("Your File is Downloading, Please wait for some time.", type="message")
+              write.csv(on_user_data(), file, row.names = FALSE)
+            }
+          )
+        }
+        else if(input$prvnc_list == "Alberta")
+        {
+          updateSelectInput(session,"enf_flow_ab", choices = list("AESO","APL","CCES","COAL","COGENERATION","COMBINED_CYCLE","EDPI","FORTIS","GAS","HYDRO","ISD","LTH","RDR","WIND"),selected = "AESO")
+          dataflow <- reactive({"DF_HFED_AB"})
+          prvnc_code <- reactive({"CA_AB"})
+          var_choice <- reactive({input$enf_flow_ab})
+          ab_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1) %>% arrange(desc(DATETIME_LOCAL))
+          updateDateRangeInput(session, "download_dates_ab",
+                               start = as.Date(ab_dwnld_data[2,'DATETIME_LOCAL']),
+                               min = as.Date(ab_dwnld_data[2,'DATETIME_LOCAL']),
+                               end = as.Date(ab_dwnld_data[1,'DATETIME_LOCAL']),
+                               max = as.Date(ab_dwnld_data[1,'DATETIME_LOCAL']))
+          ab_dwnld_date_1 <- reactive({as.character(input$download_dates_ab[1])})
+          ab_dwnld_date_2 <- reactive({as.character(input$download_dates_ab[2])})
+          ab_user_data <- reactive({dataset("DF_HFED_AB","CA_AB","H",input$enf_flow_ab,ab_dwnld_date_1(),ab_dwnld_date_2(),NULL)})
+          output$DOWNLOAD_TABLE <- DT::renderDataTable({(ab_user_data()[c((1:3),(5:8),11,13)])})
+          output$button_dwnld <- downloadHandler(
+            filename = function() {
+              flname <- paste("HFED_",input$prvnc_list,input$enf_flow_ab,"data")
+              paste(flname,"csv",sep = ".")
+            },
+            content = function(file)
+            {
+              showNotification("Your File is Downloading, Please wait for some time.", type="message")
+              write.csv(ab_user_data(), file, row.names = FALSE)
+            }
+          )
+        }
+        else if(input$prvnc_list == "British Columbia")
+        {
+          updateSelectInput(session,"enf_flow_bc", choices = list("LOAD"),selected = "LOAD")
+          dataflow <- reactive({"DF_HFED_BC"})
+          prvnc_code <- reactive({"CA_BC"})
+          var_choice <- reactive({input$enf_flow_bc})
+          bc_dwnld_data <- download_api(dataflow(),prvnc_code(),"H",var_choice(),NULL,NULL,1,1) %>% arrange(desc(DATETIME_LOCAL))
+          updateDateRangeInput(session, "download_dates_bc",
+                               start = as.Date(bc_dwnld_data[2,'DATETIME_LOCAL']),
+                               min = as.Date(bc_dwnld_data[2,'DATETIME_LOCAL']),
+                               end = as.Date(bc_dwnld_data[1,'DATETIME_LOCAL']),
+                               max = as.Date(bc_dwnld_data[1,'DATETIME_LOCAL']))
+          bc_dwnld_date_1 <- reactive({as.character(input$download_dates_bc[1])})
+          bc_dwnld_date_2 <- reactive({as.character(input$download_dates_bc[2])})
+          bc_user_data <- reactive({dataset("DF_HFED_BC","CA_BC","H",input$enf_flow_bc,bc_dwnld_date_1(),bc_dwnld_date_2(),NULL)})
+          output$DOWNLOAD_TABLE <- DT::renderDataTable({(bc_user_data()[c((1:3),(5:8),11,13)])})
+          output$button_dwnld <- downloadHandler(
+            filename = function() {
+              flname <- paste("HFED_",input$prvnc_list,input$enf_flow_bc,"data")
+              paste(flname,"csv",sep = ".")
+            },
+            content = function(file)
+            {
+              showNotification("Your File is Downloading, Please wait for some time.", type="message")
+              write.csv(bc_user_data(), file, row.names = FALSE)
+            }
+          )
         }
       })
       
@@ -5285,7 +6119,8 @@ else if(input$rted_menu == "pei")
         ),
         tags$tr(
           tags$td("Alberta"),
-          tags$td("ok")
+          tags$td(ab_api_stat()),
+          tags$td(ab_src_stat())
         ),
         tags$tr(
           tags$td("Quebec"),
@@ -5333,11 +6168,6 @@ else if(input$rted_menu == "pei")
     updateTabsetPanel(session = session, inputId = "rted_menu", selected = "QB")
   })
   
-  # observeEvent(input$button_pei_ind_1,{
-  #   createAlert(session, "NB_1", content = paste("please select this table:",config$provinces$NB$table1, sep = " "), style = "info", dismiss = TRUE)
-  #   Sys.sleep(0.5)
-  #   updateTabsetPanel(session = session, inputId = "rted_menu", selected = "Dwn") 
-  # })
   
   
   #Language button Control Start
@@ -5399,406 +6229,6 @@ else if(input$rted_menu == "pei")
   #language control button end
   
   
-  # File Download System
-  #observeEvent(input$rted_menu, {
-    #if(input$rted_menu == "Dwn")
-     #{
-    #   updateDateRangeInput(session, "nb_date_range",
-    #                        start = tail(nb_ind_dat_load$DATETIME_LOCAL,1),
-    #                        min = tail(nb_ind_dat_load$DATETIME_LOCAL,1),
-    #                        end = head(nb_ind_dat_load$DATETIME_LOCAL,1),
-    #                        max = head(nb_ind_dat_load$DATETIME_LOCAL,1))
-    #   updateDateRangeInput(session, "ns_date_range",
-    #                        start = head(ns_ind_dat$Date_time_local,1),
-    #                        min = head(ns_ind_dat$Date_time_local,1),
-    #                        end = tail(ns_ind_dat$Date_time_local,1),
-    #                        max = tail(ns_ind_dat$Date_time_local,1))
-    #   updateDateRangeInput(session, "ns_date_range_1",
-    #                        start = head(ns_ind_dat_1$Date_time_local,1),
-    #                        min = head(ns_ind_dat_1$Date_time_local,1),
-    #                        end = tail(ns_ind_dat_1$Date_time_local,1),
-    #                        max = tail(ns_ind_dat_1$Date_time_local,1))
-    #   updateDateRangeInput(session, "ab_date_range",
-    #                        start = head(nbload_data()$Date_time_local,1),
-    #                        min = head(nbload_data()$Date_time_local,1),
-    #                        end = tail(nbload_data()$Date_time_local,1),
-    #                        max = tail(nbload_data()$Date_time_local,1))
-    #   updateDateRangeInput(session, "bc_date_range",
-    #                        start = head(bc_ind_dat$Date_time_local,1),
-    #                        min = head(bc_ind_dat$Date_time_local,1),
-    #                        end = tail(bc_ind_dat$Date_time_local,1),
-    #                        max = tail(bc_ind_dat$Date_time_local,1))
-    #   updateDateRangeInput(session, "bc_date_range_1",
-    #                        start = head(bc_ind_dat_1$date_time_local,1),
-    #                        min = head(bc_ind_dat_1$date_time_local,1),
-    #                        end = tail(bc_ind_dat_1$date_time_local,1),
-    #                        max = tail(bc_ind_dat_1$date_time_local,1))
-    #   
-    #   updateDateRangeInput(session, "on_date_range",
-    #                        start = head(on_ind_dat$date_time_local,1),
-    #                        min = head(on_ind_dat$date_time_local,1),
-    #                        end = tail(on_ind_dat$date_time_local,1),
-    #                        max = tail(on_ind_dat$date_time_local,1))
-    #   updateDateRangeInput(session, "pei_date_range",
-    #                        start = tail(pei_ind_dat_load$DATETIME_LOCAL,1),
-    #                        min = tail(pei_ind_dat_load$DATETIME_LOCAL,1),
-    #                        end = head(pei_ind_dat_load$DATETIME_LOCAL,1),
-    #                        max = head(pei_ind_dat_load$DATETIME_LOCAL,1))
-    #   updateDateRangeInput(session, "nfl_date_range",
-    #                        start = head(nfl_ind_dat$Date_time_local,1),
-    #                        min = head(nfl_ind_dat$Date_time_local,1),
-    #                        end = tail(nfl_ind_dat$Date_time_local,1),
-    #                        max = tail(nfl_ind_dat$Date_time_local,1))
-    #   updateDateRangeInput(session, "qb_date_range",
-    #                        start = head(qb_ind_dat_1$Date_time_local,1),
-    #                        min = head(qb_ind_dat_1$Date_time_local,1),
-    #                        end = tail(qb_ind_dat_1$Date_time_local,1),
-    #                        max = tail(qb_ind_dat_1$Date_time_local,1))
-    #   updateDateRangeInput(session, "qb_date_range_1",
-    #                        start = head(qb_ind_dat_2$Date_time_local,1),
-    #                        min = head(qb_ind_dat_2$Date_time_local,1),
-    #                        end = tail(qb_ind_dat_2$Date_time_local,1),
-    #                        max = tail(qb_ind_dat_2$Date_time_local,1))
-    #   updateDateRangeInput(session, "qb_date_range_2",
-    #                        start = head(qb_ind_dat_3$Date_time_local,1),
-    #                        min = head(qb_ind_dat_3$Date_time_local,1),
-    #                        end = tail(qb_ind_dat_3$Date_time_local,1),
-    #                        max = tail(qb_ind_dat_3$Date_time_local,1))
-    #   
-    #   updateSelectInput(session,"ab_ind_9_ff", choices = unique(ab_ind_dat_9$ASSET))
-    #   
-    #   
-    
-    #}
-    #   if(!is.null(input$ns_filter))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$ns_filter,{
-    #       output$data_ns_1 <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste(config$provinces$NS$table1,"csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$ns_date_range[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$ns_date_range[2],"00:00:00",sep = " ")
-    #           nsload_subset_download <- subset(ns_ind_dat,subset = (ns_ind_dat$Date_time_local >= date_1 & ns_ind_dat$Date_time_local <= date_2))
-    #           write.csv(nsload_subset_download, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    #   if(!is.null(input$ns_filter_1))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$ns_filter_1,{
-    #       output$data_ns_2 <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste(config$provinces$NS$table2,"csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$ns_date_range_1[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$ns_date_range_1[2],"00:00:00",sep = " ")
-    #           nsload_subset_download_1 <- subset(ns_ind_dat_1,subset = (ns_ind_dat_1$Date_time_local >= date_1 & ns_ind_dat_1$Date_time_local <= date_2))
-    #           write.csv(nsload_subset_download_1, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    #   if(!is.null(input$bc_filter))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$bc_filter,{
-    #       output$data_bc_1 <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste(config$provinces$BC$table1,"csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$bc_date_range[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$bc_date_range[2],"00:00:00",sep = " ")
-    #           bcload_subset_download <- subset(bc_ind_dat,subset = (bc_ind_dat$Date_time_local >= date_1 & bc_ind_dat$Date_time_local <= date_2))
-    #           write.csv(bcload_subset_download, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    #   if(!is.null(input$bc_filter_1))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$bc_filter_1,{
-    #       output$data_bc_2 <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste(config$provinces$BC$table3,"csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$bc_date_range_1[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$bc_date_range_1[2],"00:00:00",sep = " ")
-    #           bcload_subset_download_1 <- subset(bc_ind_dat_1,subset = (bc_ind_dat_1$date_time_local >= date_1 & bc_ind_dat_1$date_time_local <= date_2))
-    #           write.csv(bcload_subset_download_1, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    #   
-    #   if(!is.null(input$pei_filter))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$pei_filter,{
-    #       output$data_pei_1 <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste("PEI-TABLE","csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$pei_date_range[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$pei_date_range[2],"00:00:00",sep = " ")
-    #           peiload_subset_download <- subset(pei_ind_dat_load,subset = (pei_ind_dat_load$DATETIME_LOCAL >= date_1 & pei_ind_dat_load$DATETIME_LOCAL <= date_2))
-    #           write.csv(peiload_subset_download, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    #   if(!is.null(input$nfl_filter))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$nfl_filter,{
-    #       output$data_nfl <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste(config$provinces$NFL$table1,"csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$nfl_date_range[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$nfl_date_range[2],"00:00:00",sep = " ")
-    #           nflload_subset_download <- subset(nfl_ind_dat,subset = (nfl_ind_dat$Date_time_local >= date_1 & nfl_ind_dat$Date_time_local <= date_2))
-    #           write.csv(nflload_subset_download, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    #   if(!is.null(input$qb_filter))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$qb_filter,{
-    #       output$data_qb_1 <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste(config$provinces$QUEBEC$table1,"csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$qb_date_range[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$qb_date_range[2],"00:00:00",sep = " ")
-    #           qbload_subset_download <- subset(qb_ind_dat_1,subset = (qb_ind_dat_1$Date_time_local >= date_1 & qb_ind_dat_1$Date_time_local <= date_2))
-    #           write.csv(qbload_subset_download, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    #   if(!is.null(input$qb_filter_1))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$qb_filter_1,{
-    #       output$data_qb_2 <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste(config$provinces$QUEBEC$table2,"csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$qb_date_range_1[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$qb_date_range_1[2],"00:00:00",sep = " ")
-    #           qbload_subset_download_1 <- subset(qb_ind_dat_2,subset = (qb_ind_dat_2$Date_time_local >= date_1 & qb_ind_dat_2$Date_time_local <= date_2))
-    #           write.csv(qbload_subset_download_1, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    #   if(!is.null(input$qb_filter_2))
-    #   {
-    #     shinyjs::show("ns_dwn_1")
-    #     observeEvent(input$qb_filter_2,{
-    #       output$data_qb_3 <- downloadHandler(
-    #         
-    #         filename = function() {
-    #           paste(config$provinces$QUEBEC$table3,"csv",sep = ".")
-    #         },
-    #         content = function(file)
-    #         {
-    #           showNotification("Your File is Downloading, Please wait for some time.", type="message")
-    #           date_1 <- paste(input$qb_date_range_2[1],"00:00:00",sep = " ")
-    #           date_2 <- paste(input$qb_date_range_2[2],"00:00:00",sep = " ")
-    #           qbload_subset_download_2 <- subset(qb_ind_dat_3,subset = (qb_ind_dat_3$Date_time_local >= date_1 & qb_ind_dat_3$Date_time_local <= date_2))
-    #           write.csv(qbload_subset_download_2, file, row.names = FALSE)
-    #         }
-    #       )
-    #     })
-    #     
-    #   }
-    # }
-    #file download system end
-    
-    
-    
-    # if(input$rted_menu == "AB"){
-    #   ab_dd_8_1 <- as.Date(tail(ab_ind_dat_8$Update_Time,1))-(7)
-    #   ab_dd_8_1_1 <- paste(ab_dd_8_1,"00:00:00",sep=" ")
-    #   ab_dd_8_2_2 <- as.Date(tail(ab_ind_dat_8$Update_Time,1))
-    #   updateSliderInput(session, "ab_dates_8",
-    #                     min = as.Date(head(ab_ind_dat_8$Update_Time,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(ab_ind_dat_8$Update_Time,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(ab_dd_8_1_1),ab_dd_8_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSelectInput(session,"ab_ind_8_ff", choices = unique(ab_ind_dat_8$ASSET))
-    #   ab_dd_9_1 <- as.Date(tail(ab_ind_dat_9$Update_Time,1))-(7)
-    #   ab_dd_9_1_1 <- paste(ab_dd_9_1,"00:00:00",sep=" ")
-    #   ab_dd_9_2_2 <- as.Date(tail(ab_ind_dat_9$Update_Time,1))
-    #   updateSliderInput(session, "ab_dates_9",
-    #                     min = as.Date(head(ab_ind_dat_9$Update_Time,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(ab_ind_dat_9$Update_Time,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(ab_dd_9_1_1),ab_dd_9_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSelectInput(session,"ab_ind_9_ff", choices = unique(ab_ind_dat_9$ASSET))
-    #   ab_dd_10_1 <- as.Date(tail(ab_ind_dat_10$Update_Time,1))-(7)
-    #   ab_dd_10_1_1 <- paste(ab_dd_10_1,"00:00:00",sep=" ")
-    #   ab_dd_10_2_2 <- as.Date(tail(ab_ind_dat_10$Update_Time,1))
-    #   updateSliderInput(session, "ab_dates_10",
-    #                     min = as.Date(head(ab_ind_dat_10$Update_Time,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(ab_ind_dat_10$Update_Time,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(ab_dd_10_1_1),ab_dd_10_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSelectInput(session,"ab_ind_10_ff", choices = unique(ab_ind_dat_10$ASSET))
-    #   ab_dd_11_1 <- as.Date(tail(ab_ind_dat_11$Update_Time,1))-(7)
-    #   ab_dd_11_1_1 <- paste(ab_dd_11_1,"00:00:00",sep=" ")
-    #   ab_dd_11_2_2 <- as.Date(tail(ab_ind_dat_11$Update_Time,1))
-    #   updateSliderInput(session, "ab_dates_11",
-    #                     min = as.Date(head(ab_ind_dat_11$Update_Time,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(ab_ind_dat_11$Update_Time,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(ab_dd_11_1_1),ab_dd_11_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSelectInput(session,"ab_ind_11_ff", choices = unique(ab_ind_dat_11$ASSET))
-    #   ab_dd_12_1 <- as.Date(tail(ab_ind_dat_12$Update_Time,1))-(7)
-    #   ab_dd_12_1_1 <- paste(ab_dd_12_1,"00:00:00",sep=" ")
-    #   ab_dd_12_2_2 <- as.Date(tail(ab_ind_dat_12$Update_Time,1))
-    #   updateSliderInput(session, "ab_dates_12",
-    #                     min = as.Date(head(ab_ind_dat_12$Update_Time,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(ab_ind_dat_12$Update_Time,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(ab_dd_12_1_1),ab_dd_12_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSelectInput(session,"ab_ind_12_ff", choices = unique(ab_ind_dat_12$ASSET))
-    #   ab_dd_13_1 <- as.Date(tail(ab_ind_dat_13$Update_Time,1))-(7)
-    #   ab_dd_13_1_1 <- paste(ab_dd_13_1,"00:00:00",sep=" ")
-    #   ab_dd_13_2_2 <- as.Date(tail(ab_ind_dat_13$Update_Time,1))
-    #   updateSliderInput(session, "ab_dates_13",
-    #                     min = as.Date(head(ab_ind_dat_13$Update_Time,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(ab_ind_dat_13$Update_Time,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(ab_dd_13_1_1),ab_dd_13_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSelectInput(session,"ab_ind_13_ff", choices = unique(ab_ind_dat_13$ASSET))
-    #   ab_dd_14_1 <- as.Date(tail(ab_ind_dat_14$Update_Time,1))-(7)
-    #   ab_dd_14_1_1 <- paste(ab_dd_14_1,"00:00:00",sep=" ")
-    #   ab_dd_14_2_2 <- as.Date(tail(ab_ind_dat_14$Update_Time,1))
-    #   updateSliderInput(session, "ab_dates_14",
-    #                     min = as.Date(head(ab_ind_dat_14$Update_Time,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(ab_ind_dat_14$Update_Time,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(ab_dd_14_1_1),ab_dd_14_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSelectInput(session,"ab_ind_14_ff", choices = unique(ab_ind_dat_14$ASSET))
-    # }
-    # if(input$rted_menu == "QB"){
-    #   qb_dd_1 <- as.Date(Sys.Date())-(7)
-    #   qb_dd_1_1 <- paste(qb_dd_1,"00:00:00",sep=" ")
-    #   qb_dd_2_2 <- as.Date(tail(qb_ind_dat_1$Date_time_local,1))
-    #   qb_dd_3_3 <- as.Date(tail(qb_ind_dat_3$Date_time_local,1))
-    #   qb_dd_4_4 <- as.Date(tail(qb_ind_dat_3$Date_time_local,1))-(7)
-    #   qb_dd_5_5 <- as.Date(tail(qb_ind_dat_2$Date_Time_UTC,1))
-    #   updateSliderInput(session, "qb_dates_1",
-    #                     min = as.Date(head(qb_ind_dat_1$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_1$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_1_1),qb_dd_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_2",
-    #                     min = as.Date(head(qb_ind_dat_1$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_1$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_1_1),qb_dd_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_3",
-    #                     min = as.Date(head(qb_ind_dat_1$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_1$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_1_1),qb_dd_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_4",
-    #                     min = as.Date(head(qb_ind_dat_1$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_1$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_1_1),qb_dd_2_2),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_5",
-    #                     min = as.Date(head(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_4_4),qb_dd_3_3),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_6",
-    #                     min = as.Date(head(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_4_4),qb_dd_3_3),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_7",
-    #                     min = as.Date(head(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_4_4),qb_dd_3_3),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_8",
-    #                     min = as.Date(head(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_4_4),qb_dd_3_3),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_9",
-    #                     min = as.Date(head(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_4_4),qb_dd_3_3),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_10",
-    #                     min = as.Date(head(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_4_4),qb_dd_3_3),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_11",
-    #                     min = as.Date(head(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_3$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_4_4),qb_dd_3_3),
-    #                     timeFormat="%Y-%m-%d")
-    #   updateSliderInput(session, "qb_dates_12",
-    #                     min = as.Date(head(qb_ind_dat_2$Date_time_local,1),"%Y-%m-%d"),
-    #                     max = as.Date(tail(qb_ind_dat_2$Date_time_local,1),"%Y-%m-%d"),
-    #                     value=c(as.Date(qb_dd_1_1),qb_dd_5_5),
-    #                     timeFormat="%Y-%m-%d")
-    #   
-    # }
     
   }
 
